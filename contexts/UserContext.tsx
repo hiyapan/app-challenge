@@ -156,7 +156,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const checkOnboardingStatus = useCallback(async () => {
     try {
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
-      setHasCompletedOnboarding(completed === 'true');
+      setHasCompletedOnboarding(false); // Temporarily force onboarding to show
     } catch (error) {
       console.error('Error checking onboarding status:', error);
       setHasCompletedOnboarding(false);

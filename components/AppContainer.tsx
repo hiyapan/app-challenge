@@ -108,7 +108,73 @@ export default function AppContainer() {
     );
   }
 
-  // Always show the Stack (tabs) - let the tab layout handle onboarding visibility
+  // Show onboarding if not completed
+  if (!hasCompletedOnboarding) {
+    return (
+      <>
+        <OnboardingScreen 
+          onGetStarted={handleGetStarted}
+          onSetupProfile={handleSetupProfile}
+        />
+        
+        <Modal
+          visible={showProfileSetup}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setShowProfileSetup(false)}
+        >
+          <ProfileSetupScreen
+            onComplete={handleProfileComplete}
+            onSkip={handleProfileSkip}
+          />
+        </Modal>
+        
+        <Modal
+          visible={showRecommendations}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={handleRecommendationsClose}
+        >
+          <View style={styles.recommendationsOverlay}>
+            <View style={styles.recommendationsModal}>
+              <View style={styles.recommendationsHeader}>
+                <View style={styles.recommendationsIcon}>
+                  <IconSymbol size={36} name="lightbulb.fill" color="#FF6B6B" />
+                </View>
+                <ThemedText style={styles.recommendationsTitle}>
+                  Your Personalized Tips
+                </ThemedText>
+                <ThemedText style={styles.recommendationsSubtitle}>
+                  Based on your profile, here are some recommendations:
+                </ThemedText>
+              </View>
+              
+              <View style={styles.recommendationsList}>
+                {recommendations.map((rec, index) => (
+                  <View key={index} style={styles.recommendationItem}>
+                    <View style={styles.recommendationBullet}>
+                      <IconSymbol size={12} name="checkmark" color="#4CAF50" />
+                    </View>
+                    <ThemedText style={styles.recommendationText}>{rec}</ThemedText>
+                  </View>
+                ))}
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.recommendationsContinueButton}
+                onPress={handleRecommendationsClose}
+              >
+                <ThemedText style={styles.recommendationsContinueText}>
+                  Continue to App
+                </ThemedText>
+                <IconSymbol size={20} name="arrow.right" color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <Stack>

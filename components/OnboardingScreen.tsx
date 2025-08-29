@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import React from 'react';
+import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface OnboardingScreenProps {
   onGetStarted: () => void;
@@ -59,7 +59,13 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
         {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
-            <IconSymbol size={120} name="heart.fill" color="white" />
+          {/*<IconSymbol size={120} name="heart.fill" color="white" />*/}
+          <Image 
+          
+            source={require('@/assets/images/logo_transparent.png')} 
+            style={{ width: 120, height: 120}}
+            resizeMode="contain"
+          />
           </View>
           <ThemedText style={styles.appTitle}>Welcome to AnemoDx</ThemedText>
           <ThemedText style={styles.appSubtitle}>

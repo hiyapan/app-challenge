@@ -10,6 +10,7 @@ import { useUserContext } from '@/contexts/UserContext';
 interface AnalysisResult {
   anemiaRisk: 'Low' | 'Medium' | 'High';
   confidence: number;
+  hemoglobinLevel: number;
   recommendations: string[];
   colorAnalysis: {
     averageRed: number;
@@ -34,9 +35,22 @@ export default function ResultsScreen() {
 
   const simulateAnalysis = () => {
     setTimeout(() => {
+      const riskLevel = Math.random() > 0.7 ? 'High' : Math.random() > 0.4 ? 'Medium' : 'Low';
+      
+      // Generate hemoglobin level based on risk level
+      let hemoglobin: number;
+      if (riskLevel === 'High') {
+        hemoglobin = Math.round((Math.random() * 3 + 7) * 10) / 10; // 7.0-10.0 g/dL
+      } else if (riskLevel === 'Medium') {
+        hemoglobin = Math.round((Math.random() * 2 + 10) * 10) / 10; // 10.0-12.0 g/dL
+      } else {
+        hemoglobin = Math.round((Math.random() * 4 + 12) * 10) / 10; // 12.0-16.0 g/dL
+      }
+
       const mockAnalysis: AnalysisResult = {
-        anemiaRisk: Math.random() > 0.7 ? 'High' : Math.random() > 0.4 ? 'Medium' : 'Low',
+        anemiaRisk: riskLevel,
         confidence: Math.round((Math.random() * 30 + 70) * 100) / 100,
+        hemoglobinLevel: hemoglobin,
         colorAnalysis: {
           averageRed: Math.round(Math.random() * 255),
           averageGreen: Math.round(Math.random() * 255),
@@ -101,7 +115,8 @@ export default function ResultsScreen() {
         confidence: analysis.confidence,
         imageUri: imageUri,
         colorAnalysis: analysis.colorAnalysis,
-        recommendations: analysis.recommendations
+        recommendations: analysis.recommendations,
+        hemoglobinLevel: analysis.hemoglobinLevel
       });
       
       router.push('/(tabs)/stats');
@@ -163,24 +178,18 @@ export default function ResultsScreen() {
               </ThemedText>
             </View>
 
-            <View style={styles.colorAnalysisContainer}>
-              <ThemedText style={styles.sectionTitle}>Color Analysis</ThemedText>
-              <View style={styles.colorMetrics}>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Red</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageRed}</ThemedText>
+            <View style={styles.hemoglobinContainer}>
+              <ThemedText style={styles.sectionTitle}>Hemoglobin Level</ThemedText>
+              <View style={styles.hemoglobinDisplay}>
+                <View style={styles.hemoglobinValue}>
+                  <ThemedText style={styles.hemoglobinNumber}>{analysis.hemoglobinLevel}</ThemedText>
+                  <ThemedText style={styles.hemoglobinUnit}>g/dL</ThemedText>
                 </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Green</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageGreen}</ThemedText>
-                </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Blue</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageBlue}</ThemedText>
-                </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Paleness</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.paleness}%</ThemedText>
+                <View style={styles.hemoglobinReference}>
+                  <ThemedText style={styles.referenceText}>Normal Range:</ThemedText>
+                  <ThemedText style={styles.referenceRange}>
+                    Women: 12.0-15.5 g/dL{'\n'}Men: 13.5-17.5 g/dL
+                  </ThemedText>
                 </View>
               </View>
             </View>
@@ -282,7 +291,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
   },
-  colorAnalysisContainer: {
+  hemoglobinContainer: {
     marginBottom: 30,
   },
   sectionTitle: {
@@ -290,24 +299,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-  colorMetrics: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  hemoglobinDisplay: {
     backgroundColor: 'rgba(0,0,0,0.05)',
-    padding: 15,
+    padding: 20,
     borderRadius: 10,
-  },
-  colorMetric: {
     alignItems: 'center',
   },
-  colorLabel: {
-    fontSize: 12,
+  hemoglobinValue: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 15,
+  },
+  hemoglobinNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  hemoglobinUnit: {
+    fontSize: 16,
+    marginLeft: 5,
     opacity: 0.7,
+  },
+  hemoglobinReference: {
+    alignItems: 'center',
+  },
+  referenceText: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 5,
   },
-  colorValue: {
-    fontSize: 16,
-    fontWeight: '600',
+  referenceRange: {
+    fontSize: 12,
+    opacity: 0.7,
+    textAlign: 'center',
   },
   recommendationsContainer: {
     marginBottom: 20,

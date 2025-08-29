@@ -14,6 +14,7 @@ export interface ScanResult {
     paleness: number;
   };
   recommendations: string[];
+  hemoglobinLevel?: number;
 }
 
 export interface UserProfile {

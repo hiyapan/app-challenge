@@ -1277,16 +1277,6 @@ export default function WellnessScreen() {
               </View>
             </ScrollView>
 
-            <TouchableOpacity 
-              style={styles.infoCloseButton}
-              onPress={() => {
-                setShowInfoModal(false);
-                markInfoAsSeen();
-              }}
-            >
-              <ThemedText style={styles.infoCloseButtonText}>Got it!</ThemedText>
-              <IconSymbol size={16} name="xmark" color="white" />
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>

@@ -12,6 +12,7 @@ interface OnboardingScreenProps {
 const { width, height } = Dimensions.get('window');
 
 export default function OnboardingScreen({ onGetStarted, onSetupProfile }: OnboardingScreenProps) {
+  console.log("Hello from Onboarding!")
   const features = [
     {
       icon: 'camera.fill',
@@ -61,7 +62,6 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
           <View style={styles.logoContainer}>
           {/*<IconSymbol size={120} name="heart.fill" color="white" />*/}
           <Image 
-          
             source={require('@/assets/images/logo_transparent.png')} 
             style={{ width: 120, height: 120}}
             resizeMode="contain"

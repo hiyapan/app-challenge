@@ -1,0 +1,20 @@
+{
+  "X_shape": [
+    250,
+    1177
+  ],
+  "X_full_shape": [
+    250,
+    128
+  ],
+  "y_len": 250,
+  "groups_len": 250,
+  "recipe": {
+    "model": "LightGBMRegressor",
+    "pca_components": 128,
+    "scaler": true,
+    "use_weights": false,
+    "seed": 0
+  },
+  "threshold_hgb_g_dL": 12.5
+}

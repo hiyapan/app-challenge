@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Modal } from 'react-native';
-import { Stack } from 'expo-router';
+import { router } from 'expo-router';
 import OnboardingScreen from '@/components/OnboardingScreen';
 import ProfileSetupScreen, { ProfileData } from '@/components/ProfileSetupScreen';
 import { useUserContext } from '@/contexts/UserContext';
@@ -27,8 +27,26 @@ export default function AppContainer() {
     initializeApp();
   }, [checkOnboardingStatus]);
 
+  useEffect(() => {
+    if (!isLoading && hasCompletedOnboarding) {
+      router.replace('/(tabs)');
+    }
+  }, [isLoading, hasCompletedOnboarding]);
+
   const handleGetStarted = async () => {
     await completeOnboarding();
+  };
+
+  const handleSkipOnboarding = async () => {
+    await completeOnboarding();
+  };
+
+  const handleGoToScanner = async () => {
+    await completeOnboarding();
+    // Navigate directly to the scanner tab
+    setTimeout(() => {
+      router.replace('/(tabs)/capture');
+    }, 100);
   };
 
   const handleSetupProfile = () => {
@@ -38,7 +56,7 @@ export default function AppContainer() {
   const handleProfileComplete = async (profileData: ProfileData) => {
     // Save profile data (you can extend UserContext to store this)
     setShowProfileSetup(false);
-    
+
     // Go directly to main app after profile setup
     await completeOnboarding();
   };
@@ -64,6 +82,8 @@ export default function AppContainer() {
         <OnboardingScreen 
           onGetStarted={handleGetStarted}
           onSetupProfile={handleSetupProfile}
+          onSkip={handleSkipOnboarding}
+          onGoToScanner={handleGoToScanner}
         />
         
         <Modal
@@ -82,13 +102,9 @@ export default function AppContainer() {
     );
   }
 
-  return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="results" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
-  );
+  // This component only handles onboarding flow
+  // Navigation happens in useEffect, not during render
+  return null;
 }
 
 const styles = StyleSheet.create({

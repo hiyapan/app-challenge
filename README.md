@@ -1,20 +1,71 @@
-# Welcome to your Expo app 👋
+# Anemia Detection App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native app with FastAPI backend for hemoglobin prediction using LightGBM and ResNet18 embeddings.
 
-## Get started
+## Quick Start
 
-1. Install dependencies
+### 1. Install dependencies
 
+```bash
+npm install
+```
+
+### 2. Setup Backend
+
+1. **Install Python dependencies:**
    ```bash
-   npm install
+   pip install -r backend/requirements.txt
    ```
 
-2. Start the app
+2. **Place your trained model:**
+   - Copy `hb_lgbm_embedding_only.pkl` to the `backend/` directory
 
-   ```bash
-   npx expo start
-   ```
+### 3. Start the API Server
+
+```bash
+npm run api:dev
+```
+
+Or manually:
+```bash
+cd backend
+uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+### 4. Start the App
+
+```bash
+npx expo start
+```
+
+## API Endpoints
+
+- **Health Check**: `GET http://192.168.1.25:8000/health`
+- **Prediction**: `POST http://192.168.1.25:8000/predict`
+
+### Testing the API
+
+You can test the prediction endpoint with curl:
+
+```bash
+curl -X POST "http://192.168.1.25:8000/predict" \
+     -H "Content-Type: application/json" \
+     -d '{"embedding": [/* 512 float values */]}'
+```
+
+## Project Structure
+
+```
+├── backend/                 # FastAPI server
+│   ├── server.py           # Main API server
+│   ├── requirements.txt    # Python dependencies
+│   └── README.md          # Backend documentation
+├── lib/                    # API utilities
+│   └── api.ts             # API client functions
+├── screens/               # React Native screens
+│   └── PredictScreen.tsx  # Prediction test screen
+└── .env                   # Environment variables
+```
 
 In the output, you'll find options to open the app in a
 
@@ -24,6 +75,22 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Troubleshooting
+
+### Stuck in Onboarding Loop?
+
+If you get stuck in the onboarding screen:
+
+1. **Use the exit options**: Tap the **X button** in the top-right corner or the **"Skip for Now"** button
+2. **Reset onboarding data**:
+   ```bash
+   npm run reset-onboarding
+   ```
+3. **Or restart with clean slate**:
+   ```bash
+   npm start -- --clear
+   ```
 
 ## Get a fresh project
 

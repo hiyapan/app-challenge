@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(npx expo install:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npx expo start:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -61,8 +61,8 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
         <View style={styles.headerSection}>
           <View style={styles.logoContainer}>
           <Image 
-            source={require('@/assets/images/logo_transparent.png')} 
-            style={{ width: 120, height: 120}}
+            source={require('@/assets/images/logo_without_text.png')} 
+            style={{ width: 130, height: 130, backgroundColor: "transparent"}}
             resizeMode="contain"
           />
           </View>
@@ -147,10 +147,10 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     marginBottom: 20,
-    padding: 30,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 80,
-    shadowColor: '#FF6B6B',
+    padding: 20,
+    backgroundColor: "#D6E9F5",
+    borderRadius: 90,
+    shadowColor: '#D6E9F5',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 8,
     color: '#222',
+    padding: 10,
   },
   appSubtitle: {
     fontSize: 16,

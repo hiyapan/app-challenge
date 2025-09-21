@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Platform, TextInput } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useTheme } from '@/contexts/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 
 interface WellnessMetric {
@@ -607,6 +607,12 @@ export default function WellnessScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.symptomModalContent}>
+          <TouchableOpacity 
+                style={styles.closeXButton}
+                onPress={() => setShowSymptomModal(false)}
+              >
+                <IconSymbol size={24} name="xmark" color="#666" />
+              </TouchableOpacity>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleContainer}>
                 <ThemedText style={styles.modalTitle}>Anemia Symptom Check</ThemedText>
@@ -614,12 +620,6 @@ export default function WellnessScreen() {
                   Check any symptoms you've experienced in the past 2 weeks
                 </ThemedText>
               </View>
-              <TouchableOpacity 
-                style={styles.closeXButton}
-                onPress={() => setShowSymptomModal(false)}
-              >
-                <IconSymbol size={24} name="xmark" color="#666" />
-              </TouchableOpacity>
             </View>
             
             <ScrollView style={styles.symptomScrollView} showsVerticalScrollIndicator={false}>
@@ -885,8 +885,15 @@ export default function WellnessScreen() {
         visible={showTipsModal}
         onRequestClose={() => setShowTipsModal(false)}
       >
+
         <View style={styles.modalOverlay}>
           <View style={styles.tipsModalContent}>
+          <TouchableOpacity 
+                style={styles.closeXButton}
+                onPress={() => setShowTipsModal(false)}
+              >
+                <IconSymbol size={24} name="xmark" color="#666" />
+        </TouchableOpacity>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleContainer}>
                 <ThemedText style={styles.modalTitle}>Health Tips</ThemedText>
@@ -894,12 +901,6 @@ export default function WellnessScreen() {
                   Tips to support your wellness journey
                 </ThemedText>
               </View>
-              <TouchableOpacity 
-                style={styles.closeXButton}
-                onPress={() => setShowTipsModal(false)}
-              >
-                <IconSymbol size={24} name="xmark" color="#666" />
-              </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.tipsScrollView} showsVerticalScrollIndicator={false}>
@@ -1233,10 +1234,21 @@ export default function WellnessScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.infoModalContent}>
+            <TouchableOpacity 
+              style={styles.closeXButton}
+              onPress={() => setShowInfoModal(false)}
+              >
+            <IconSymbol size={24} name="xmark" color="#666" />
+            </TouchableOpacity>
+
+
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.infoHeaderContent}>
-                <IconSymbol size={120} name="heart.fill" color="#20B2AA" />
-                <ThemedText style={styles.infoHeaderTitle}>AnemoDx</ThemedText>
+                <Image 
+                            source={require('@/assets/images/logo_without_text.png')} 
+                            style={{ width: 130, height: 130, backgroundColor: "transparent"}}
+                            resizeMode="contain"
+                />
               </View>
 
               <ThemedText style={styles.infoModalTitle}>Welcome to AnemoDx</ThemedText>
@@ -1335,6 +1347,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: 70,
+  },
+  closeButton1: {
+    position: "absolute",
+    top: 15,
+    right: 15,
+    backgroundColor: "transparent", // remove background
+    padding: 5, // so it's tappable but invisible background
+    zIndex: 10,
   },
   welcomeSection: {
     paddingHorizontal: 24,
@@ -1640,6 +1660,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
     color: '#222',
+    paddingTop: 10,
   },
   modalSubtitle: {
     fontSize: 15,
@@ -2298,9 +2319,8 @@ const styles = StyleSheet.create({
   },
   infoHeaderContent: {
     alignItems: 'center',
-    marginBottom: 30,
-    paddingTop: 20,
-    paddingBottom: 10,
+    paddingTop: 5,
+    paddingBottom: 5,
   },
   infoHeaderTitle: {
     fontSize: 32,

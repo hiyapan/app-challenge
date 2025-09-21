@@ -269,26 +269,20 @@ export default function StatsScreen() {
                   </ThemedText>
                 </View>
                 
-                {/* Color Analysis */}
-                {showScanDetail.colorAnalysis && (
+                {/* Hemoglobin Level */}
+                {showScanDetail.hemoglobinLevel && (
                   <View style={styles.scanDetailSection}>
-                    <ThemedText style={styles.scanDetailSectionTitle}>Color Analysis</ThemedText>
-                    <View style={styles.scanDetailColorGrid}>
-                      <View style={styles.scanDetailColorItem}>
-                        <ThemedText style={styles.scanDetailColorLabel}>Red</ThemedText>
-                        <ThemedText style={styles.scanDetailColorValue}>{showScanDetail.colorAnalysis.averageRed}</ThemedText>
+                    <ThemedText style={styles.scanDetailSectionTitle}>Hemoglobin Level</ThemedText>
+                    <View style={styles.hemoglobinContainer}>
+                      <View style={styles.hemoglobinValue}>
+                        <ThemedText style={styles.hemoglobinNumber}>{showScanDetail.hemoglobinLevel}</ThemedText>
+                        <ThemedText style={styles.hemoglobinUnit}>g/dL</ThemedText>
                       </View>
-                      <View style={styles.scanDetailColorItem}>
-                        <ThemedText style={styles.scanDetailColorLabel}>Green</ThemedText>
-                        <ThemedText style={styles.scanDetailColorValue}>{showScanDetail.colorAnalysis.averageGreen}</ThemedText>
-                      </View>
-                      <View style={styles.scanDetailColorItem}>
-                        <ThemedText style={styles.scanDetailColorLabel}>Blue</ThemedText>
-                        <ThemedText style={styles.scanDetailColorValue}>{showScanDetail.colorAnalysis.averageBlue}</ThemedText>
-                      </View>
-                      <View style={styles.scanDetailColorItem}>
-                        <ThemedText style={styles.scanDetailColorLabel}>Paleness</ThemedText>
-                        <ThemedText style={styles.scanDetailColorValue}>{showScanDetail.colorAnalysis.paleness}%</ThemedText>
+                      <View style={styles.hemoglobinReferenceContainer}>
+                        <ThemedText style={styles.hemoglobinReferenceTitle}>Normal Range:</ThemedText>
+                        <ThemedText style={styles.hemoglobinReferenceText}>
+                          Women: 12.0-15.5 g/dL{'\n'}Men: 13.5-17.5 g/dL
+                        </ThemedText>
                       </View>
                     </View>
                   </View>
@@ -817,30 +811,39 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     textAlign: 'center',
   },
-  scanDetailColorGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  scanDetailColorItem: {
+  hemoglobinContainer: {
     backgroundColor: 'rgba(0,0,0,0.05)',
-    padding: 15,
+    padding: 20,
     borderRadius: 12,
     alignItems: 'center',
-    flex: 0.48,
-    minWidth: '45%',
   },
-  scanDetailColorLabel: {
+  hemoglobinValue: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 15,
+  },
+  hemoglobinNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  hemoglobinUnit: {
+    fontSize: 16,
+    marginLeft: 5,
+    opacity: 0.7,
+  },
+  hemoglobinReferenceContainer: {
+    alignItems: 'center',
+  },
+  hemoglobinReferenceTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 5,
+  },
+  hemoglobinReferenceText: {
     fontSize: 12,
     opacity: 0.7,
-    marginBottom: 5,
-    fontWeight: '600',
-  },
-  scanDetailColorValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#20B2AA',
+    textAlign: 'center',
   },
   scanDetailRecommendationItem: {
     flexDirection: 'row',

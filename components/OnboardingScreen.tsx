@@ -1,18 +1,18 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import React from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface OnboardingScreenProps {
   onGetStarted: () => void;
   onSetupProfile: () => void;
+  onSkip?: () => void;
+  onGoToScanner?: () => void;
 }
 
 const { width, height } = Dimensions.get('window');
 
-export default function OnboardingScreen({ onGetStarted, onSetupProfile }: OnboardingScreenProps) {
-  console.log("Hello from Onboarding!")
+export default function OnboardingScreen({ onGetStarted, onSetupProfile, onSkip, onGoToScanner }: OnboardingScreenProps) {
   const features = [
     {
       icon: 'camera.fill',
@@ -53,7 +53,16 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView 
+      {/* Close button */}
+      <TouchableOpacity 
+        style={styles.closeButton} 
+        onPress={onSkip || onGetStarted}
+        accessibilityLabel="Skip onboarding"
+      >
+        <IconSymbol size={24} name="xmark" color="#666" />
+      </TouchableOpacity>
+      
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -114,12 +123,17 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
 
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.scannerButton} onPress={onGoToScanner}>
+          <ThemedText style={styles.scannerButtonText}>Start Scanning Now</ThemedText>
+          <IconSymbol size={20} name="camera.fill" color="white" />
+        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.setupProfileButton} onPress={onSetupProfile}>
           <ThemedText style={styles.setupProfileText}>Setup Your Profile</ThemedText>
           <IconSymbol size={20} name="person.circle.fill" color="white" />
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.skipButton} onPress={onGetStarted}>
+        <TouchableOpacity style={styles.skipButton} onPress={onSkip || onGetStarted}>
           <ThemedText style={styles.skipText}>Skip for Now</ThemedText>
         </TouchableOpacity>
         
@@ -269,10 +283,34 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.08)',
   },
+  scannerButton: {
+    flexDirection: 'row',
+    backgroundColor: '#20B2AA',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    shadowColor: '#20B2AA',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  scannerButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '700',
+    marginRight: 8,
+  },
   setupProfileButton: {
     flexDirection: 'row',
     backgroundColor: '#FF6B6B',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 25,
     alignItems: 'center',
@@ -283,14 +321,14 @@ const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
   },
   setupProfileText: {
     color: 'white',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     marginRight: 8,
   },
   skipButton: {
@@ -339,5 +377,17 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     lineHeight: 18,
     color: '#666',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
   },
 });

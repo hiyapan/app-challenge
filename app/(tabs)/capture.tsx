@@ -66,10 +66,11 @@ export default function CaptureScreen() {
     if (cameraRef.current) {
       try {
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.8,
-          base64: true,
+          quality: 0.3,  // Reduced quality for faster upload
+          base64: false, // Don't need base64, saves memory
+          skipProcessing: false,
         });
-        
+
         if (photo) {
           router.push({
             pathname: '/results',
@@ -118,22 +119,36 @@ export default function CaptureScreen() {
       <View style={styles.titleSection}>
         <ThemedText style={styles.title}>Anemia Detection</ThemedText>
         <ThemedText style={styles.subtitle}>
-          Position your fingernail in the camera frame
+          Place your fingernails in the rectangular frame below
         </ThemedText>
       </View>
       
-      <CameraView 
-        style={styles.camera} 
-        facing={facing}
-        flash={flash}
-        ref={cameraRef}
-      >
+      <View style={styles.cameraContainer}>
+        <CameraView 
+          style={styles.camera} 
+          facing={facing}
+          flash={flash}
+          ref={cameraRef}
+        />
+        
+        {/* Overlay positioned absolutely over camera */}
         <View style={styles.cameraOverlay}>
-          <View style={styles.targetArea}>
-            <View style={styles.targetCorners} />
+          <View style={styles.rectangularFrame}>
+            {/* Corner indicators */}
+            <View style={[styles.corner, styles.topLeft]} />
+            <View style={[styles.corner, styles.topRight]} />
+            <View style={[styles.corner, styles.bottomLeft]} />
+            <View style={[styles.corner, styles.bottomRight]} />
+            
+            {/* Center guide lines */}
+            <View style={styles.centerLines}>
+              <View style={styles.horizontalLine} />
+              <View style={styles.verticalLine} />
+            </View>
           </View>
         </View>
         
+        {/* Camera controls positioned absolutely */}
         <View style={styles.buttonContainer}>
           <View style={styles.leftControls}>
             <TouchableOpacity style={styles.controlButton} onPress={toggleFlash}>
@@ -154,7 +169,7 @@ export default function CaptureScreen() {
             </ThemedText>
           </View>
         </View>
-      </CameraView>
+      </View>
 
       {/* Profile Selector Modal */}
       <Modal
@@ -320,6 +335,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.8,
   },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+  },
   camera: {
     flex: 1,
     borderRadius: 10,
@@ -328,30 +347,83 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cameraOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 90,
+  },
+  // Rectangular frame styles
+  rectangularFrame: {
+    width: 280,
+    height: 180,
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  targetArea: {
-    width: 200,
-    height: 200,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  targetCorners: {
-    width: 150,
-    height: 150,
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: '#00FF88',
     borderWidth: 3,
-    borderColor: 'white',
-    borderRadius: 75,
-    backgroundColor: 'transparent',
+  },
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderBottomWidth: 0,
+    borderRightWidth: 0,
+  },
+  topRight: {
+    top: 0,
+    right: 0,
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+  },
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderTopWidth: 0,
+    borderRightWidth: 0,
+  },
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+  },
+  centerLines: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  horizontalLine: {
+    position: 'absolute',
+    width: '60%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  verticalLine: {
+    position: 'absolute',
+    width: 1,
+    height: '60%',
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   buttonContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 40,
   },
   leftControls: {
     flexDirection: 'row',

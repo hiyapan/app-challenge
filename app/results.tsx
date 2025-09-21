@@ -6,17 +6,14 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useUserContext } from '@/contexts/UserContext';
+import { sendEmbedding, predictFromImages } from '@/lib/api';
 
 interface AnalysisResult {
+  hb_pred: number;
+  is_anemic: 0 | 1;
   anemiaRisk: 'Low' | 'Medium' | 'High';
-  confidence: number;
   recommendations: string[];
-  colorAnalysis: {
-    averageRed: number;
-    averageGreen: number;
-    averageBlue: number;
-    paleness: number;
-  };
+  confidence?: number;
 }
 
 export default function ResultsScreen() {
@@ -28,40 +25,54 @@ export default function ResultsScreen() {
 
   useEffect(() => {
     if (imageUri) {
-      simulateAnalysis();
+      analyzeImage();
     }
   }, [imageUri]);
 
-  const simulateAnalysis = () => {
-    setTimeout(() => {
-      const mockAnalysis: AnalysisResult = {
-        anemiaRisk: Math.random() > 0.7 ? 'High' : Math.random() > 0.4 ? 'Medium' : 'Low',
-        confidence: Math.round((Math.random() * 30 + 70) * 100) / 100,
-        colorAnalysis: {
-          averageRed: Math.round(Math.random() * 255),
-          averageGreen: Math.round(Math.random() * 255),
-          averageBlue: Math.round(Math.random() * 255),
-          paleness: Math.round(Math.random() * 100),
-        },
-        recommendations: []
-      };
+  const analyzeImage = async () => {
+    setIsAnalyzing(true);
 
-      if (mockAnalysis.anemiaRisk === 'High') {
-        mockAnalysis.recommendations = [
-          'Consult with a healthcare professional immediately',
-          'Consider iron-rich foods in your diet',
-          'Get a complete blood count (CBC) test',
-          'Avoid activities that may worsen fatigue'
-        ];
-      } else if (mockAnalysis.anemiaRisk === 'Medium') {
-        mockAnalysis.recommendations = [
-          'Schedule a check-up with your doctor',
-          'Monitor your energy levels and symptoms',
-          'Include iron-rich foods like spinach, red meat, and legumes',
-          'Consider taking vitamin C to improve iron absorption'
-        ];
+    try {
+      // Use the new image-based prediction endpoint (pass as array)
+      const backendResponse = await predictFromImages([imageUri]);
+      
+      // Determine risk level based on hemoglobin prediction
+      let riskLevel: 'Low' | 'Medium' | 'High';
+      if (backendResponse.hb_pred < 10) {
+        riskLevel = 'High';
+      } else if (backendResponse.hb_pred < 12.5) {
+        riskLevel = 'Medium';
       } else {
-        mockAnalysis.recommendations = [
+        riskLevel = 'Low';
+      }
+
+      // Generate recommendations based on prediction
+      let recommendations: string[];
+      if (backendResponse.is_anemic) {
+        if (backendResponse.hb_pred < 8) {
+          recommendations = [
+            'Seek immediate medical attention - severely low hemoglobin',
+            'This level requires urgent medical intervention',
+            'Do not delay in consulting a healthcare professional',
+            'Avoid strenuous activities until treated'
+          ];
+        } else if (backendResponse.hb_pred < 10) {
+          recommendations = [
+            'Consult with a healthcare professional immediately',
+            'Consider iron-rich foods in your diet',
+            'Get a complete blood count (CBC) test',
+            'Avoid activities that may worsen fatigue'
+          ];
+        } else {
+          recommendations = [
+            'Schedule a check-up with your doctor',
+            'Monitor your energy levels and symptoms',
+            'Include iron-rich foods like spinach, red meat, and legumes',
+            'Consider taking vitamin C to improve iron absorption'
+          ];
+        }
+      } else {
+        recommendations = [
           'Maintain a balanced diet rich in iron',
           'Regular health check-ups are recommended',
           'Stay hydrated and get adequate sleep',
@@ -69,9 +80,49 @@ export default function ResultsScreen() {
         ];
       }
 
-      setAnalysis(mockAnalysis);
+      const analysis: AnalysisResult = {
+        hb_pred: backendResponse.hb_pred,
+        is_anemic: backendResponse.is_anemic,
+        anemiaRisk: riskLevel,
+        recommendations,
+        confidence: 85 // Mock confidence for now
+      };
+
+      setAnalysis(analysis);
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      console.error('Backend URL:', process.env.EXPO_PUBLIC_API_URL);
+
+      let errorMessage = 'Unknown error occurred';
+      if (error instanceof Error) {
+        if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
+          errorMessage = 'Request timed out - server may be slow or unreachable';
+        } else if (error.message.includes('Network')) {
+          errorMessage = 'Network connection error - check your internet';
+        } else if (error.message.includes('500')) {
+          errorMessage = 'Server error - backend may be processing';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      // Fallback to mock analysis if backend fails
+      const fallbackAnalysis: AnalysisResult = {
+        hb_pred: 12.5,
+        is_anemic: 0,
+        anemiaRisk: 'Low',
+        recommendations: [
+          `Analysis failed: ${errorMessage}`,
+          `Server: ${process.env.EXPO_PUBLIC_API_URL || 'undefined'}`,
+          'Try again or check your connection',
+          'Consult a healthcare professional for accurate diagnosis'
+        ],
+        confidence: 0
+      };
+      setAnalysis(fallbackAnalysis);
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const getRiskColor = (risk: string) => {
@@ -98,10 +149,11 @@ export default function ResultsScreen() {
       await addScanToProfile(selectedProfileId, {
         result: analysis.anemiaRisk === 'High' ? 'High Risk' : 
                analysis.anemiaRisk === 'Medium' ? 'Medium Risk' : 'Low Risk',
-        confidence: analysis.confidence,
+        confidence: analysis.confidence ?? 0,
         imageUri: imageUri,
-        colorAnalysis: analysis.colorAnalysis,
-        recommendations: analysis.recommendations
+        colorAnalysis: { averageRed: 0, averageGreen: 0, averageBlue: 0, paleness: 0 }, // Placeholder values
+        recommendations: analysis.recommendations,
+        hemoglobinLevel: analysis.hb_pred
       });
       
       router.push('/(tabs)/stats');
@@ -146,9 +198,17 @@ export default function ResultsScreen() {
 
         {isAnalyzing ? (
           <View style={styles.loadingContainer}>
-            <ThemedText style={styles.loadingText}>Analyzing image...</ThemedText>
+            <View style={styles.loadingSpinner}>
+              <ThemedText style={styles.loadingEmoji}>🔬</ThemedText>
+            </View>
+            <ThemedText style={styles.loadingText}>Analyzing fingernails...</ThemedText>
             <ThemedText style={styles.loadingSubtext}>
-              This may take a few seconds
+              Compressing image and processing with AI
+            </ThemedText>
+            <ThemedText style={styles.loadingSteps}>
+              • Optimizing image size{'\n'}
+              • Extracting features with ResNet18{'\n'}
+              • Predicting hemoglobin levels
             </ThemedText>
           </View>
         ) : analysis ? (
@@ -163,24 +223,18 @@ export default function ResultsScreen() {
               </ThemedText>
             </View>
 
-            <View style={styles.colorAnalysisContainer}>
-              <ThemedText style={styles.sectionTitle}>Color Analysis</ThemedText>
-              <View style={styles.colorMetrics}>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Red</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageRed}</ThemedText>
+            <View style={styles.hemoglobinContainer}>
+              <ThemedText style={styles.sectionTitle}>Hemoglobin Level</ThemedText>
+              <View style={styles.hemoglobinDisplay}>
+                <View style={styles.hemoglobinValue}>
+                  <ThemedText style={styles.hemoglobinNumber}>{analysis.hb_pred.toFixed(1)}</ThemedText>
+                  <ThemedText style={styles.hemoglobinUnit}>g/dL</ThemedText>
                 </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Green</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageGreen}</ThemedText>
-                </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Blue</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.averageBlue}</ThemedText>
-                </View>
-                <View style={styles.colorMetric}>
-                  <ThemedText style={styles.colorLabel}>Paleness</ThemedText>
-                  <ThemedText style={styles.colorValue}>{analysis.colorAnalysis.paleness}%</ThemedText>
+                <View style={styles.hemoglobinReference}>
+                  <ThemedText style={styles.referenceText}>Normal Range:</ThemedText>
+                  <ThemedText style={styles.referenceRange}>
+                    Women: 12.0-15.5 g/dL{'\n'}Men: 13.5-17.5 g/dL
+                  </ThemedText>
                 </View>
               </View>
             </View>
@@ -245,15 +299,36 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  loadingSpinner: {
+    marginBottom: 20,
+  },
+  loadingEmoji: {
+    fontSize: 48,
+    textAlign: 'center',
   },
   loadingText: {
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 8,
+    textAlign: 'center',
   },
   loadingSubtext: {
     fontSize: 14,
     opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  loadingSteps: {
+    fontSize: 12,
+    opacity: 0.6,
+    textAlign: 'left',
+    lineHeight: 18,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
   },
   resultsContainer: {
     paddingHorizontal: 20,
@@ -282,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
   },
-  colorAnalysisContainer: {
+  hemoglobinContainer: {
     marginBottom: 30,
   },
   sectionTitle: {
@@ -290,24 +365,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 15,
   },
-  colorMetrics: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  hemoglobinDisplay: {
     backgroundColor: 'rgba(0,0,0,0.05)',
-    padding: 15,
+    padding: 20,
     borderRadius: 10,
-  },
-  colorMetric: {
     alignItems: 'center',
   },
-  colorLabel: {
-    fontSize: 12,
+  hemoglobinValue: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 15,
+  },
+  hemoglobinNumber: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#007AFF',
+  },
+  hemoglobinUnit: {
+    fontSize: 16,
+    marginLeft: 5,
     opacity: 0.7,
+  },
+  hemoglobinReference: {
+    alignItems: 'center',
+  },
+  referenceText: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 5,
   },
-  colorValue: {
-    fontSize: 16,
-    fontWeight: '600',
+  referenceRange: {
+    fontSize: 12,
+    opacity: 0.7,
+    textAlign: 'center',
   },
   recommendationsContainer: {
     marginBottom: 20,
@@ -363,6 +453,11 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonText: {
+    color: 'white',
     fontSize: 16,
     fontWeight: '600',
   },

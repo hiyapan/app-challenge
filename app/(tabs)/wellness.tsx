@@ -807,7 +807,7 @@ export default function WellnessScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.notificationModalContent}>
             <View style={[styles.notificationIcon, { backgroundColor: notificationData.color }]}>
-              <IconSymbol size={32} name={notificationData.icon} color="white" />
+              <IconSymbol size={32} name={notificationData.icon as any} color="white" />
             </View>
             
             <ThemedText style={styles.notificationTitle}>
@@ -968,7 +968,7 @@ export default function WellnessScreen() {
                   {personalizedMessages.map((message, index) => (
                     <View key={index} style={[styles.personalizedMessageCard, { borderLeftColor: message.color }]}>
                       <View style={[styles.personalizedMessageIcon, { backgroundColor: `${message.color}15` }]}>
-                        <IconSymbol size={20} name={message.icon} color={message.color} />
+                        <IconSymbol size={20} name={message.icon as any} color={message.color} />
                       </View>
                       <View style={styles.personalizedMessageContent}>
                         <ThemedText style={styles.personalizedMessageTitle}>{message.title}</ThemedText>

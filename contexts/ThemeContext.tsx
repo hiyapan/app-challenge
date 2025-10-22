@@ -73,12 +73,12 @@ const themeOptions: ThemeOption[] = [
   { 
     id: 'theme6', 
     name: 'Theme 6', 
-    primary: '#27AE60', 
-    secondary: '#2ECC71', 
-    accent: '#58D68D',
+    primary: '#219ebc', 
+    secondary: '#126782', 
+    accent: '#ffb703',
     surface: '#E8F8F5',
     background: '#F0FDF4',
-    palette: ['#0F5132', '#1E7E34', '#27AE60', '#2ECC71', '#58D68D'] // Green nature
+    palette: ['#8ecae6', '#219ebc', '#126782', '#ffb703', '#fb8500']
   }
 ];
 

@@ -147,9 +147,6 @@ export default function ResultsScreen() {
               <View style={[styles.riskBadge, { backgroundColor: getRiskColor(analysis.anemiaRisk) }]}>
                 <ThemedText style={styles.riskText}>{analysis.anemiaRisk} Risk</ThemedText>
               </View>
-              <ThemedText style={styles.confidenceText}>
-                Confidence: {analysis.confidence}%
-              </ThemedText>
             </View>
 
             <View style={styles.hemoglobinContainer}>

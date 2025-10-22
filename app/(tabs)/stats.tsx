@@ -19,7 +19,7 @@ export default function StatsScreen() {
   const [renameUserName, setRenameUserName] = useState('');
   const [showScanDetail, setShowScanDetail] = useState<ScanResult | null>(null);
   
-  const { profiles, selectedProfileId, selectProfile, addProfile, deleteProfile, renameProfile, loadProfiles } = useUserContext();
+  const { profiles, selectedProfileId, selectProfile, addProfile, deleteProfile, renameProfile, clearScansForProfile, loadProfiles } = useUserContext();
   const { currentTheme } = useTheme();
 
   useEffect(() => {
@@ -139,13 +139,6 @@ export default function StatsScreen() {
                   </ThemedText>
                   <ThemedText style={styles.statLabel}>Latest Result</ThemedText>
                 </View>
-                
-                <View style={styles.statCard}>
-                  <ThemedText style={[styles.statNumber, { color: currentTheme.primary }]}>
-                    {Math.round(selectedUserData.scans.reduce((avg, scan) => avg + scan.confidence, 0) / selectedUserData.scans.length) || 0}%
-                  </ThemedText>
-                  <ThemedText style={styles.statLabel}>Avg Confidence</ThemedText>
-                </View>
               </View>
             </View>
           </View>
@@ -154,7 +147,31 @@ export default function StatsScreen() {
         {/* Scan History */}
         {selectedUserData && (
           <View style={styles.historyContainer}>
-            <ThemedText style={styles.sectionTitle}>Scan History</ThemedText>
+            <View style={styles.historyHeader}>
+              <ThemedText style={styles.sectionTitle}>Scan History</ThemedText>
+              {selectedUserData.scans.length > 0 && (
+                <TouchableOpacity 
+                  style={styles.clearHistoryButton}
+                  onPress={() => {
+                    Alert.alert(
+                      'Clear Scan History',
+                      `Are you sure you want to clear all ${selectedUserData.scans.length} scan${selectedUserData.scans.length !== 1 ? 's' : ''} for ${selectedUserData.name}?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        { 
+                          text: 'Clear All', 
+                          style: 'destructive',
+                          onPress: () => clearScansForProfile(selectedUserData.id)
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <IconSymbol size={18} name="trash" color="#F44336" />
+                  <ThemedText style={styles.clearHistoryText}>Clear All</ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
             
             {selectedUserData.scans.map((scan) => (
               <TouchableOpacity
@@ -190,7 +207,6 @@ export default function StatsScreen() {
                     <ThemedText style={styles.scanDate}>{new Date(scan.date).toLocaleDateString()}</ThemedText>
                   </View>
                   <View style={styles.scanActions}>
-                    <ThemedText style={styles.confidence}>{scan.confidence}%</ThemedText>
                     <IconSymbol size={16} name="chevron.right" color="#666" />
                   </View>
                 </View>
@@ -250,7 +266,6 @@ export default function StatsScreen() {
                       <IconSymbol size={24} name={getRiskIcon(showScanDetail.result)} color="white" />
                       <ThemedText style={styles.scanDetailRiskText}>{showScanDetail.result}</ThemedText>
                     </View>
-                    <ThemedText style={styles.scanDetailConfidence}>Confidence: {showScanDetail.confidence}%</ThemedText>
                   </View>
                 </View>
                 
@@ -403,17 +418,6 @@ export default function StatsScreen() {
                 <ThemedText style={styles.createButtonText}>Create Profile</ThemedText>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.quickNameButton}
-              onPress={() => {
-                const quickNames = ['Mom', 'Dad', 'Child', 'Spouse', 'Parent'];
-                const randomName = quickNames[Math.floor(Math.random() * quickNames.length)];
-                setNewUserName(randomName);
-              }}
-            >
-              <ThemedText style={styles.quickNameButtonText}>Suggest Random Name</ThemedText>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -550,6 +554,28 @@ const styles = StyleSheet.create({
   },
   historyContainer: {
     paddingHorizontal: 20,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  clearHistoryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(244, 67, 54, 0.3)',
+  },
+  clearHistoryText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#F44336',
   },
   scanCard: {
     backgroundColor: 'rgba(0,0,0,0.05)',

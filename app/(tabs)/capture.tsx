@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, TextInput } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, TextInput, Pressable, Image } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions, FlashMode } from 'expo-camera';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,6 +15,7 @@ export default function CaptureScreen() {
   const [showProfileSelector, setShowProfileSelector] = useState(false);
   const [showAddProfileModal, setShowAddProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
+  const [showHandGuide, setShowHandGuide] = useState(true);
   const cameraRef = useRef<CameraView>(null);
   const { profiles, selectedProfileId, selectProfile, getSelectedProfile, loadProfiles, addProfile } = useUserContext();
   const { currentTheme } = useTheme();
@@ -118,7 +119,7 @@ export default function CaptureScreen() {
       <View style={styles.titleSection}>
         <ThemedText style={styles.title}>Anemia Detection</ThemedText>
         <ThemedText style={styles.subtitle}>
-          Position your fingernail in the camera frame
+          Position your hand in the camera frame
         </ThemedText>
       </View>
       
@@ -128,11 +129,21 @@ export default function CaptureScreen() {
         flash={flash}
         ref={cameraRef}
       >
-        <View style={styles.cameraOverlay}>
-          <View style={styles.targetArea}>
-            <View style={styles.targetCorners} />
-          </View>
-        </View>
+        {showHandGuide && (
+          <Pressable 
+            style={styles.handGuideOverlay}
+            onPress={() => setShowHandGuide(false)}
+          >
+            <View style={styles.handGuideContainer}>
+              <Image 
+                source={require('@/assets/images/hand-1352e3595671d084b36c6bce653f2e0f.png')}
+                style={styles.handImage}
+                resizeMode="contain"
+              />
+              <ThemedText style={styles.guideText}>Tap to dismiss</ThemedText>
+            </View>
+          </Pressable>
+        )}
         
         <View style={styles.buttonContainer}>
           <View style={styles.leftControls}>
@@ -347,18 +358,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   buttonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingBottom: 100,
   },
   leftControls: {
+    position: 'absolute',
+    left: 20,
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
   },
   rightControls: {
+    position: 'absolute',
+    right: 20,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 70,
@@ -396,6 +414,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+  },
+  handGuideOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    zIndex: 100,
+  },
+  handGuideContainer: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    marginRight: -180,
+  },
+  handImage: {
+    width: 450,
+    height: 450,
+    opacity: 0.5,
+    transform: [{ rotate: '-90deg' }],
+  },
+  guideText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 20,
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   button: {
     backgroundColor: '#007AFF',

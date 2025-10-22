@@ -36,6 +36,7 @@ interface UserContextType {
   renameProfile: (profileId: string, newName: string) => Promise<void>;
   selectProfile: (profileId: string) => void;
   addScanToProfile: (profileId: string, scan: Omit<ScanResult, 'id' | 'date'>) => Promise<void>;
+  clearScansForProfile: (profileId: string) => Promise<void>;
   getSelectedProfile: () => UserProfile | undefined;
   loadProfiles: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
@@ -150,6 +151,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     await saveProfiles(updatedProfiles);
   }, [profiles]);
 
+  const clearScansForProfile = useCallback(async (profileId: string) => {
+    const updatedProfiles = profiles.map(profile => 
+      profile.id === profileId 
+        ? { ...profile, scans: [] }
+        : profile
+    );
+    await saveProfiles(updatedProfiles);
+  }, [profiles]);
+
   const getSelectedProfile = useCallback(() => {
     return profiles.find(p => p.id === selectedProfileId);
   }, [profiles, selectedProfileId]);
@@ -182,6 +192,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     renameProfile,
     selectProfile,
     addScanToProfile,
+    clearScansForProfile,
     getSelectedProfile,
     loadProfiles,
     completeOnboarding,

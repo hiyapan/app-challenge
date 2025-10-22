@@ -537,20 +537,20 @@ export default function WellnessScreen() {
         </View>
 
 
-        <ThemedText style={styles.wellnessTitle}>Health Tools</ThemedText>
+        <ThemedText style={[styles.wellnessTitle, { color: getCurrentTheme().secondary }]}>Health Tools</ThemedText>
 
         {/* Symptom Check */}
         <TouchableOpacity style={styles.symptomCheckCard} onPress={() => setShowSymptomModal(true)}>
           <View style={styles.symptomCheckContent}>
-            <View style={[styles.symptomCheckIcon, { backgroundColor: getCurrentTheme().primary }]}>
+            <View style={[styles.symptomCheckIcon, { backgroundColor: getCurrentTheme().accent }]}>
               <IconSymbol size={28} name="stethoscope" color="white" />
             </View>
             <View style={styles.symptomCheckInfo}>
-              <ThemedText style={styles.symptomCheckTitle}>Symptom Check</ThemedText>
+              <ThemedText style={[styles.symptomCheckTitle, { color: getCurrentTheme().secondary }]}>Symptom Check</ThemedText>
               <ThemedText style={styles.symptomCheckSubtitle}>
                 Quick assessment of anemia-related symptoms
               </ThemedText>
-              <ThemedText style={styles.symptomCheckStatus}>
+              <ThemedText style={[styles.symptomCheckStatus, { color: getCurrentTheme().accent }]}>
                 {getSymptomValue()}
               </ThemedText>
             </View>
@@ -561,11 +561,11 @@ export default function WellnessScreen() {
 
 
 
-        <View style={[styles.personalizationBanner, { backgroundColor: `${getCurrentTheme().primary}20`, borderColor: `${getCurrentTheme().primary}40` }]}>
+        <View style={[styles.personalizationBanner, { backgroundColor: `${getCurrentTheme().primary}15`, borderColor: `${getCurrentTheme().primary}30` }]}>
           <View style={styles.bannerContent}>
             <IconSymbol size={20} name="person.circle" color={getCurrentTheme().primary} />
             <View style={styles.bannerText}>
-              <ThemedText style={styles.bannerTitle}>
+              <ThemedText style={[styles.bannerTitle, { color: getCurrentTheme().primary }]}>
                 Personalize Your Information
               </ThemedText>
               <ThemedText style={styles.bannerSubtitle}>
@@ -587,12 +587,12 @@ export default function WellnessScreen() {
         </View>
 
         <View style={styles.bottomButtonsContainer}>
-          <TouchableOpacity style={[styles.tipsButton, { backgroundColor: `${currentTheme.secondary}20`, borderColor: `${currentTheme.secondary}40` }]} onPress={() => setShowTipsModal(true)}>
+          <TouchableOpacity style={[styles.tipsButton, { backgroundColor: `${currentTheme.accent}15`, borderColor: `${currentTheme.accent}40` }]} onPress={() => setShowTipsModal(true)}>
             <View style={styles.tipsButtonContent}>
-              <IconSymbol size={18} name="lightbulb.fill" color={currentTheme.secondary} />
-              <ThemedText style={[styles.tipsButtonText, { color: currentTheme.secondary }]}>Health Tips</ThemedText>
+              <IconSymbol size={18} name="lightbulb.fill" color={currentTheme.accent} />
+              <ThemedText style={[styles.tipsButtonText, { color: currentTheme.accent }]}>Health Tips</ThemedText>
             </View>
-            <IconSymbol size={16} name="chevron.right" color={currentTheme.primary} />
+            <IconSymbol size={16} name="chevron.right" color={currentTheme.accent} />
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -49,45 +49,44 @@ export default function AppContainer() {
   };
 
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF6B6B" />
-      </View>
-    );
-  }
-
-  // Show onboarding if not completed
-  if (!hasCompletedOnboarding) {
-    return (
-      <>
-        <OnboardingScreen 
-          onGetStarted={handleGetStarted}
-          onSetupProfile={handleSetupProfile}
-        />
-        
-        <Modal
-          visible={showProfileSetup}
-          animationType="slide"
-          presentationStyle="pageSheet"
-          onRequestClose={() => setShowProfileSetup(false)}
-        >
-          <ProfileSetupScreen
-            onComplete={handleProfileComplete}
-            onSkip={handleProfileSkip}
-          />
-        </Modal>
-        
-      </>
-    );
-  }
-
   return (
-    <Stack>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="results" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="results" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      
+      {/* Loading Overlay */}
+      {isLoading && (
+        <View style={[StyleSheet.absoluteFill, styles.loadingContainer]}>
+          <ActivityIndicator size="large" color="#FF6B6B" />
+        </View>
+      )}
+      
+      {/* Onboarding Overlay */}
+      {!isLoading && !hasCompletedOnboarding && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'white' }]}>
+          <OnboardingScreen 
+            onGetStarted={handleGetStarted}
+            onSetupProfile={handleSetupProfile}
+          />
+        </View>
+      )}
+      
+      {/* Profile Setup Modal */}
+      <Modal
+        visible={showProfileSetup}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowProfileSetup(false)}
+      >
+        <ProfileSetupScreen
+          onComplete={handleProfileComplete}
+          onSkip={handleProfileSkip}
+        />
+      </Modal>
+    </>
   );
 }
 

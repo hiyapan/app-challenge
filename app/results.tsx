@@ -1,91 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useUserContext } from '@/contexts/UserContext';
-
-interface AnalysisResult {
-  anemiaRisk: 'Low' | 'Medium' | 'High';
-  confidence: number;
-  hemoglobinLevel: number;
-  recommendations: string[];
-  colorAnalysis: {
-    averageRed: number;
-    averageGreen: number;
-    averageBlue: number;
-    paleness: number;
-  };
-}
+import { analyzeImages, AnalysisResult, checkHealth } from '@/lib/api';
 
 export default function ResultsScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { selectedProfileId, addScanToProfile, getSelectedProfile } = useUserContext();
 
   useEffect(() => {
     if (imageUri) {
-      simulateAnalysis();
+      performAnalysis();
     }
   }, [imageUri]);
 
-  const simulateAnalysis = () => {
-    setTimeout(() => {
-      const riskLevel = Math.random() > 0.7 ? 'High' : Math.random() > 0.4 ? 'Medium' : 'Low';
+  const performAnalysis = async () => {
+    try {
+      setIsAnalyzing(true);
+      setError(null);
+
+      // Check if backend is available
+      const isHealthy = await checkHealth();
+      if (!isHealthy) {
+        throw new Error('Backend server is not available. Please ensure the backend is running.');
+      }
+
+      // Send image to backend for analysis
+      const result = await analyzeImages([imageUri]);
+      setAnalysis(result);
+    } catch (err) {
+      console.error('Analysis error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
       
-      // Generate hemoglobin level based on risk level
-      let hemoglobin: number;
-      if (riskLevel === 'High') {
-        hemoglobin = Math.round((Math.random() * 3 + 7) * 10) / 10; // 7.0-10.0 g/dL
-      } else if (riskLevel === 'Medium') {
-        hemoglobin = Math.round((Math.random() * 2 + 10) * 10) / 10; // 10.0-12.0 g/dL
-      } else {
-        hemoglobin = Math.round((Math.random() * 4 + 12) * 10) / 10; // 12.0-16.0 g/dL
-      }
-
-      const mockAnalysis: AnalysisResult = {
-        anemiaRisk: riskLevel,
-        confidence: Math.round((Math.random() * 30 + 70) * 100) / 100,
-        hemoglobinLevel: hemoglobin,
-        colorAnalysis: {
-          averageRed: Math.round(Math.random() * 255),
-          averageGreen: Math.round(Math.random() * 255),
-          averageBlue: Math.round(Math.random() * 255),
-          paleness: Math.round(Math.random() * 100),
-        },
-        recommendations: []
-      };
-
-      if (mockAnalysis.anemiaRisk === 'High') {
-        mockAnalysis.recommendations = [
-          'Consult with a healthcare professional immediately',
-          'Consider iron-rich foods in your diet',
-          'Get a complete blood count (CBC) test',
-          'Avoid activities that may worsen fatigue'
-        ];
-      } else if (mockAnalysis.anemiaRisk === 'Medium') {
-        mockAnalysis.recommendations = [
-          'Schedule a check-up with your doctor',
-          'Monitor your energy levels and symptoms',
-          'Include iron-rich foods like spinach, red meat, and legumes',
-          'Consider taking vitamin C to improve iron absorption'
-        ];
-      } else {
-        mockAnalysis.recommendations = [
-          'Maintain a balanced diet rich in iron',
-          'Regular health check-ups are recommended',
-          'Stay hydrated and get adequate sleep',
-          'Continue monitoring your health'
-        ];
-      }
-
-      setAnalysis(mockAnalysis);
+      Alert.alert(
+        'Analysis Failed',
+        errorMessage + '\n\nWould you like to retry?',
+        [
+          { text: 'Cancel', style: 'cancel', onPress: () => router.back() },
+          { text: 'Retry', onPress: () => performAnalysis() }
+        ]
+      );
+    } finally {
       setIsAnalyzing(false);
-    }, 3000);
+    }
   };
 
   const getRiskColor = (risk: string) => {
@@ -163,8 +129,16 @@ export default function ResultsScreen() {
           <View style={styles.loadingContainer}>
             <ThemedText style={styles.loadingText}>Analyzing image...</ThemedText>
             <ThemedText style={styles.loadingSubtext}>
-              This may take a few seconds
+              Connecting to backend server...
             </ThemedText>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <IconSymbol size={48} name="exclamationmark.triangle.fill" color="#FF4444" />
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+            <TouchableOpacity style={styles.retryButton} onPress={performAnalysis}>
+              <ThemedText style={styles.retryButtonText}>Retry Analysis</ThemedText>
+            </TouchableOpacity>
           </View>
         ) : analysis ? (
           <View style={styles.resultsContainer}>
@@ -263,6 +237,29 @@ const styles = StyleSheet.create({
   loadingSubtext: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 15,
+    marginBottom: 20,
+    color: '#FF4444',
+  },
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   resultsContainer: {
     paddingHorizontal: 20,

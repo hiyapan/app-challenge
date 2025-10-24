@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 
 export interface ScanResult {
   id: string;
@@ -154,7 +154,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return profiles.find(p => p.id === selectedProfileId);
   }, [profiles, selectedProfileId]);
 
-  const checkOnboardingStatus = useCallback(async () => {
+  /*const checkOnboardingStatus = useCallback(async () => {
     try {
       const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
       setHasCompletedOnboarding(completed === 'true');
@@ -162,7 +162,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       console.error('Error checking onboarding status:', error);
       setHasCompletedOnboarding(false);
     }
+  }, []);*/
+
+  const checkOnboardingStatus = useCallback(async () => {
+    try {
+      console.log('🔍 Checking onboarding status...');
+      const completed = await AsyncStorage.getItem(ONBOARDING_KEY);
+      console.log('📁 Value retrieved from AsyncStorage for', ONBOARDING_KEY, ':', completed);
+      console.log('📋 Comparison (completed === "true"):', completed === 'true');
+      setHasCompletedOnboarding(completed === 'true');
+    } catch (error) {
+      console.error('❌ Error checking onboarding status:', error);
+      setHasCompletedOnboarding(false);
+    }
   }, []);
+
+
 
   const completeOnboarding = useCallback(async () => {
     try {

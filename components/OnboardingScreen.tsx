@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
   },
   skipText: {
     color: '#666',

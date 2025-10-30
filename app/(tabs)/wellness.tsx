@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Platform, TextInput } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Platform, TextInput, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useTheme } from '@/contexts/ThemeContext';
+import { InfoGuide } from '@/components/InfoGuide';
+import { useUserContext } from '@/contexts/UserContext';
 
 
 interface WellnessMetric {
@@ -26,6 +28,7 @@ interface SymptomCheck {
 
 export default function WellnessScreen() {
   const { currentTheme, themeOptions, setTheme } = useTheme();
+  const { getSelectedProfile } = useUserContext();
   const [symptoms, setSymptoms] = useState<SymptomCheck[]>([
     { id: '1', question: 'Feeling unusually tired or weak?', checked: false },
     { id: '2', question: 'Shortness of breath during normal activities?', checked: false },
@@ -65,6 +68,8 @@ export default function WellnessScreen() {
   const [showIronFoodsSection, setShowIronFoodsSection] = useState(false);
   const [showPersonalizedTipsModal, setShowPersonalizedTipsModal] = useState(false);
   const [showPersonalizedTipsSection, setShowPersonalizedTipsSection] = useState(false);
+  const [showDataContributionModal, setShowDataContributionModal] = useState(false);
+  const [dataContributionEnabled, setDataContributionEnabled] = useState(false);
   
   // User profile data
   const [userProfile, setUserProfile] = useState({
@@ -93,7 +98,9 @@ export default function WellnessScreen() {
   // Load profile data and check info status on component mount
   useEffect(() => {
     loadUserProfile();
+    loadSymptoms();
     checkInfoStatus();
+    loadDataContribution();
   }, []);
 
   // Save profile data when it changes
@@ -123,20 +130,64 @@ export default function WellnessScreen() {
     }
   };
 
+  const loadSymptoms = async () => {
+    try {
+      const savedSymptoms = await AsyncStorage.getItem('user_symptoms');
+      if (savedSymptoms) {
+        const parsedSymptoms = JSON.parse(savedSymptoms);
+        setSymptoms(parsedSymptoms);
+      }
+    } catch (error) {
+      console.error('Error loading symptoms:', error);
+    }
+  };
+
+  const saveSymptoms = async (symptomsToSave: SymptomCheck[]) => {
+    try {
+      await AsyncStorage.setItem('user_symptoms', JSON.stringify(symptomsToSave));
+    } catch (error) {
+      console.error('Error saving symptoms:', error);
+    }
+  };
+
+  const loadDataContribution = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('data_contribution_enabled');
+      if (saved !== null) {
+        setDataContributionEnabled(saved === 'true');
+      }
+    } catch (error) {
+      console.error('Error loading data contribution setting:', error);
+    }
+  };
+
+  const toggleDataContribution = async () => {
+    const newValue = !dataContributionEnabled;
+    setDataContributionEnabled(newValue);
+    try {
+      await AsyncStorage.setItem('data_contribution_enabled', newValue.toString());
+    } catch (error) {
+      console.error('Error saving data contribution setting:', error);
+    }
+  };
+
   const checkInfoStatus = async () => {
     try {
       const seenInfo = await AsyncStorage.getItem('has_seen_info');
       if (seenInfo === 'true') {
         setHasSeenInfo(true);
+        // Don't auto-show if already seen
       } else {
         // First time user - show info modal automatically
         setHasSeenInfo(false);
-        setShowInfoModal(true);
+        // Delay to ensure component is mounted
+        setTimeout(() => {
+          console.log('Auto-showing InfoGuide for first time user');
+          setShowInfoModal(true);
+        }, 500);
       }
     } catch (error) {
       console.error('Error checking info status:', error);
-      // If error, show info modal to be safe
-      setShowInfoModal(true);
     }
   };
 
@@ -147,6 +198,11 @@ export default function WellnessScreen() {
     } catch (error) {
       console.error('Error saving info status:', error);
     }
+  };
+
+  const handleCloseInfoGuide = () => {
+    markInfoAsSeen();
+    setShowInfoModal(false);
   };
 
   const getGreeting = () => {
@@ -179,38 +235,50 @@ export default function WellnessScreen() {
 
 
   const toggleSymptom = (id: string) => {
-    setSymptoms(prev => prev.map(symptom => 
-      symptom.id === id ? { ...symptom, checked: !symptom.checked } : symptom
-    ));
+    setSymptoms(prev => {
+      const updated = prev.map(symptom => 
+        symptom.id === id ? { ...symptom, checked: !symptom.checked } : symptom
+      );
+      // Auto-save symptoms whenever they're toggled
+      saveSymptoms(updated);
+      return updated;
+    });
   };
 
   const getCheckedCount = () => symptoms.filter(s => s.checked).length;
 
-  const handleSubmitSymptoms = () => {
+  const handleSubmitSymptoms = async () => {
     const checkedCount = getCheckedCount();
     let message = '';
     let title = '';
     let icon = 'checkmark.circle.fill';
     let color = '#4CAF50';
 
+    // Save symptoms to AsyncStorage
+    try {
+      await AsyncStorage.setItem('user_symptoms', JSON.stringify(symptoms));
+    } catch (error) {
+      console.error('Error saving symptoms:', error);
+    }
+
     if (checkedCount === 0) {
       title = 'Great News!';
-      message = 'No anemia symptoms reported. Keep maintaining your healthy lifestyle!';
+      message = 'No symptoms reported. Keep maintaining your healthy lifestyle and balanced nutrition!';
       icon = 'checkmark.circle.fill';
       color = '#4CAF50';
     } else if (checkedCount <= 2) {
-      title = 'Low Risk';
-      message = 'You have minimal symptoms. Consider monitoring your diet and energy levels.';
+      title = 'Wellness Check';
+      message = 'You have minimal symptoms. Focus on iron-rich foods, hydration, and adequate rest. Monitor your energy levels.';
       icon = 'checkmark.circle';
       color = '#FF9800';
     } else if (checkedCount <= 4) {
-      title = 'Moderate Risk';
-      message = 'You have several symptoms. Consider consulting a healthcare professional and taking an anemia screening test.';
+      title = 'Wellness Focus';
+      message = 'You have several symptoms. Prioritize iron-rich nutrition, stay hydrated, get quality sleep, and consider tracking your wellness. Consult a healthcare professional for medical guidance if needed.';
       icon = 'exclamationmark.triangle.fill';
       color = '#FF9800';
     } else {
-      title = 'High Risk';
-      message = 'You have multiple symptoms that may indicate anemia. We strongly recommend consulting a healthcare professional for proper testing.';
+      title = 'Health Attention';
+      message = 'You have multiple symptoms. Focus on comprehensive wellness: iron-rich diet, hydration, rest, and stress management. Consider consulting a healthcare professional for medical advice.';
       icon = 'exclamationmark.triangle.fill';
       color = '#F44336';
     }
@@ -499,6 +567,22 @@ export default function WellnessScreen() {
   // Get personalized messages
   const personalizedMessages = generatePersonalizedHealthMessages(userProfile);
 
+  // Get latest scan for quick stats
+  const currentProfile = getSelectedProfile();
+  const latestScan = currentProfile?.scans?.[0];
+
+  const getRiskColor = (risk: string) => {
+    if (risk === 'Low Risk') return '#1F8A70';
+    if (risk === 'Medium Risk') return '#FF9800';
+    return '#F44336';
+  };
+
+  const getRiskIcon = (risk: string) => {
+    if (risk === 'Low Risk') return 'checkmark.circle.fill';
+    if (risk === 'Medium Risk') return 'exclamationmark.triangle.fill';
+    return 'exclamationmark.circle.fill';
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -512,32 +596,69 @@ export default function WellnessScreen() {
             </View>
             <TouchableOpacity 
               style={[styles.infoButton, { backgroundColor: `${getCurrentTheme().primary}20` }]}
-              onPress={() => setShowInfoModal(true)}
+              onPress={() => {
+                console.log('Info button pressed! Current state:', showInfoModal);
+                setShowInfoModal(true);
+                console.log('Set showInfoModal to true');
+              }}
             >
               <IconSymbol size={24} name="info.circle.fill" color={getCurrentTheme().primary} />
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Quick Stats Card */}
+        {latestScan && (
+          <View style={styles.quickStatsCard}>
+            <View style={styles.quickStatsHeader}>
+              <ThemedText style={styles.quickStatsTitle}>Latest Scan Result</ThemedText>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/stats')}>
+                <ThemedText style={[styles.viewAllLink, { color: getCurrentTheme().accent }]}>View All</ThemedText>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.quickStatsContent}>
+              <View style={[styles.riskBadge, { backgroundColor: getRiskColor(latestScan.result) }]}>
+                <IconSymbol size={24} name={getRiskIcon(latestScan.result)} color="white" />
+              </View>
+              <View style={styles.quickStatsInfo}>
+                <ThemedText style={[styles.riskLevel, { color: getRiskColor(latestScan.result) }]}>{latestScan.result}</ThemedText>
+                <ThemedText style={styles.scanDate}>{new Date(latestScan.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</ThemedText>
+                {latestScan.hemoglobinLevel && (
+                  <ThemedText style={styles.hemoglobinText}>Hb: {latestScan.hemoglobinLevel.toFixed(1)} g/dL</ThemedText>
+                )}
+              </View>
+              <Image
+                source={{ uri: latestScan.imageUri }}
+                style={styles.scanPreviewImage}
+                resizeMode="cover"
+              />
+            </View>
+          </View>
+        )}
+
         {/* Start Anemia Scan Button */}
         <View style={styles.scanSection}>
           <TouchableOpacity
-            style={[styles.mainScanButton, { backgroundColor: getCurrentTheme().primary }]}
+            style={[styles.mainScanButton, { 
+              backgroundColor: `${getCurrentTheme().primary}10`,
+              borderWidth: 2,
+              borderColor: `${getCurrentTheme().primary}40`
+            }]}
             onPress={() => router.push('/(tabs)/capture')}
           >
             <View style={styles.scanIconContainer}>
-              <IconSymbol size={40} name="camera.fill" color="white" />
+              <IconSymbol size={40} name="camera.fill" color={getCurrentTheme().primary} />
             </View>
             <View style={styles.scanContent}>
-              <ThemedText style={styles.scanTitle}>Start Anemia Scan</ThemedText>
-              <ThemedText style={styles.scanSubtitle}>Take a photo of your fingernail for analysis</ThemedText>
+              <ThemedText style={[styles.scanTitle, { color: getCurrentTheme().primary }]}>Start Anemia Scan</ThemedText>
+              <ThemedText style={[styles.scanSubtitle, { color: getCurrentTheme().secondary }]}>Take a photo of your fingernail for analysis</ThemedText>
             </View>
-            <IconSymbol size={20} name="chevron.right" color="rgba(255,255,255,0.8)" />
+            <IconSymbol size={20} name="chevron.right" color={getCurrentTheme().primary} />
           </TouchableOpacity>
         </View>
 
 
-        <ThemedText style={[styles.wellnessTitle, { color: getCurrentTheme().secondary }]}>Health Tools</ThemedText>
+        <ThemedText style={styles.wellnessTitle}>Health Tools</ThemedText>
 
         {/* Symptom Check */}
         <TouchableOpacity style={styles.symptomCheckCard} onPress={() => setShowSymptomModal(true)}>
@@ -558,41 +679,39 @@ export default function WellnessScreen() {
           </View>
         </TouchableOpacity>
 
-
-
-
-        <View style={[styles.personalizationBanner, { backgroundColor: `${getCurrentTheme().primary}15`, borderColor: `${getCurrentTheme().primary}30` }]}>
-          <View style={styles.bannerContent}>
-            <IconSymbol size={20} name="person.circle" color={getCurrentTheme().primary} />
-            <View style={styles.bannerText}>
-              <ThemedText style={[styles.bannerTitle, { color: getCurrentTheme().primary }]}>
-                Personalize Your Information
-              </ThemedText>
-              <ThemedText style={styles.bannerSubtitle}>
-                {userProfile.completed 
-                  ? 'Update your personal details and preferences' 
-                  : 'Add your details for a personalized experience'
-                }
-              </ThemedText>
-            </View>
-          </View>
-          <TouchableOpacity 
-            style={[styles.personalizeButton, { backgroundColor: getCurrentTheme().primary }]}
-            onPress={() => setShowPersonalizationModal(true)}
-          >
-            <ThemedText style={styles.personalizeButtonText}>
-              {userProfile.completed ? 'Update' : 'Setup'}
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-
+        {/* Action Buttons Container */}
         <View style={styles.bottomButtonsContainer}>
-          <TouchableOpacity style={[styles.tipsButton, { backgroundColor: `${currentTheme.accent}15`, borderColor: `${currentTheme.accent}40` }]} onPress={() => setShowTipsModal(true)}>
-            <View style={styles.tipsButtonContent}>
-              <IconSymbol size={18} name="lightbulb.fill" color={currentTheme.accent} />
-              <ThemedText style={[styles.tipsButtonText, { color: currentTheme.accent }]}>Health Tips</ThemedText>
+          {/* Health Tips Bar */}
+          <TouchableOpacity style={[styles.actionBar, { backgroundColor: `${currentTheme.accent}15`, borderColor: `${currentTheme.accent}40` }]} onPress={() => setShowTipsModal(true)}>
+            <View style={styles.actionBarContent}>
+              <IconSymbol size={20} name="lightbulb.fill" color={currentTheme.accent} />
+              <ThemedText style={[styles.actionBarText, { color: currentTheme.accent }]}>Health Tips</ThemedText>
             </View>
-            <IconSymbol size={16} name="chevron.right" color={currentTheme.accent} />
+            <IconSymbol size={18} name="chevron.right" color={currentTheme.accent} />
+          </TouchableOpacity>
+
+          {/* Personalization Bar */}
+          <TouchableOpacity style={[styles.actionBar, { backgroundColor: `${getCurrentTheme().primary}15`, borderColor: `${getCurrentTheme().primary}40` }]} onPress={() => setShowPersonalizationModal(true)}>
+            <View style={styles.actionBarContent}>
+              <IconSymbol size={20} name="person.circle.fill" color={getCurrentTheme().primary} />
+              <ThemedText style={[styles.actionBarText, { color: getCurrentTheme().primary }]}>
+                {userProfile.completed ? 'Update Profile' : 'Personalize Your Information'}
+              </ThemedText>
+            </View>
+            <View style={[styles.actionButton, { backgroundColor: getCurrentTheme().primary }]}>
+              <IconSymbol size={14} name={userProfile.completed ? 'pencil' : 'plus'} color="white" />
+            </View>
+          </TouchableOpacity>
+
+          {/* Data Contribution Bar */}
+          <TouchableOpacity style={[styles.actionBar, { backgroundColor: `#4CAF5015`, borderColor: `#4CAF5040` }]} onPress={() => setShowDataContributionModal(true)}>
+            <View style={styles.actionBarContent}>
+              <IconSymbol size={20} name="chart.bar.fill" color="#4CAF50" />
+              <ThemedText style={[styles.actionBarText, { color: '#4CAF50' }]}>Contribute Anonymized Data</ThemedText>
+            </View>
+            <View style={[styles.actionButton, { backgroundColor: dataContributionEnabled ? '#4CAF50' : '#999' }]}>
+              <IconSymbol size={14} name={dataContributionEnabled ? 'checkmark' : 'xmark'} color="white" />
+            </View>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -822,7 +941,7 @@ export default function WellnessScreen() {
               style={[styles.notificationButton, { backgroundColor: notificationData.color }]}
               onPress={() => setShowNotificationModal(false)}
             >
-              <ThemedText style={styles.notificationButtonText}>Got it!</ThemedText>
+              <ThemedText style={styles.notificationButtonText}>OK</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -940,7 +1059,7 @@ export default function WellnessScreen() {
                   <View style={styles.ironTipCard}>
                     <IconSymbol size={20} name="lightbulb.fill" color="#FF9800" />
                     <ThemedText style={styles.ironTipText}>
-                      💡 Pro tip: Pair iron-rich foods with vitamin C sources (citrus fruits, bell peppers, strawberries) to boost iron absorption!
+                      Pro tip: Pair iron-rich foods with vitamin C sources (citrus fruits, bell peppers, strawberries) to boost iron absorption!
                     </ThemedText>
                   </View>
                 </View>
@@ -998,56 +1117,6 @@ export default function WellnessScreen() {
 
               {/* Buffer Space */}
               <View style={styles.bufferSpace} />
-
-              <View style={styles.tipModalCard}>
-                <IconSymbol size={24} name="sun.max.fill" color="#FF9800" />
-                <View style={styles.tipModalContent}>
-                  <ThemedText style={styles.tipModalTitle}>Vitamin C Boost</ThemedText>
-                  <ThemedText style={styles.tipModalText}>
-                    Pair iron-rich foods with vitamin C sources like citrus fruits, strawberries, and bell peppers to improve iron absorption.
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.tipModalCard}>
-                <IconSymbol size={24} name="figure.walk" color="#2196F3" />
-                <View style={styles.tipModalContent}>
-                  <ThemedText style={styles.tipModalTitle}>Stay Active</ThemedText>
-                  <ThemedText style={styles.tipModalText}>
-                    Regular exercise improves circulation and overall health. Aim for at least 30 minutes of moderate activity daily.
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.tipModalCard}>
-                <IconSymbol size={24} name="drop.fill" color="#00BCD4" />
-                <View style={styles.tipModalContent}>
-                  <ThemedText style={styles.tipModalTitle}>Stay Hydrated</ThemedText>
-                  <ThemedText style={styles.tipModalText}>
-                    Proper hydration supports healthy blood flow and nutrient transport. Aim for 8 glasses of water daily.
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.tipModalCard}>
-                <IconSymbol size={24} name="moon.fill" color="#6B73FF" />
-                <View style={styles.tipModalContent}>
-                  <ThemedText style={styles.tipModalTitle}>Quality Sleep</ThemedText>
-                  <ThemedText style={styles.tipModalText}>
-                    Get 7-8 hours of quality sleep each night. Good sleep helps your body recover and maintain healthy iron levels. Poor sleep can worsen anemia symptoms.
-                  </ThemedText>
-                </View>
-              </View>
-
-              <View style={styles.tipModalCard}>
-                <IconSymbol size={24} name="drop.fill" color="#00BCD4" />
-                <View style={styles.tipModalContent}>
-                  <ThemedText style={styles.tipModalTitle}>Hydration Guidelines</ThemedText>
-                  <ThemedText style={styles.tipModalText}>
-                    Drink 8-10 glasses of water daily to support healthy blood circulation and help transport nutrients effectively throughout your body.
-                  </ThemedText>
-                </View>
-              </View>
             </ScrollView>
           </View>
         </View>
@@ -1224,59 +1293,66 @@ export default function WellnessScreen() {
         </View>
       </Modal>
 
-      {/* Info Modal */}
+      {/* Info Guide */}
+      <InfoGuide 
+        visible={showInfoModal}
+        onClose={handleCloseInfoGuide}
+        themeColor={getCurrentTheme().primary}
+      />
+
+      {/* Data Contribution Modal */}
       <Modal
         animationType="slide"
         transparent={true}
-        visible={showInfoModal}
-        onRequestClose={() => setShowInfoModal(false)}
+        visible={showDataContributionModal}
+        onRequestClose={() => setShowDataContributionModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.infoModalContent}>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={styles.infoHeaderContent}>
-                <IconSymbol size={120} name="heart.fill" color="#20B2AA" />
-                <ThemedText style={styles.infoHeaderTitle}>AnemoDx</ThemedText>
-              </View>
-
-              <ThemedText style={styles.infoModalTitle}>Welcome to AnemoDx</ThemedText>
-              <ThemedText style={styles.infoModalSubtitle}>
-                Learn about anemia and how our app can help with early detection
-              </ThemedText>
-
-              <View style={styles.infoStepContainer}>
-                <View style={styles.infoStepHeader}>
-                  <IconSymbol size={24} name="camera.fill" color="#20B2AA" />
-                  <ThemedText style={styles.infoStepTitle}>How It Works</ThemedText>
-                </View>
-                <ThemedText style={styles.infoStepText}>
-                  Simply take a photo of your fingernail and get instant analysis results based on color analysis.
+          <View style={styles.dataContributionModalContent}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleContainer}>
+                <ThemedText style={styles.dataModalTitle}>Contribute to Health Research</ThemedText>
+                <ThemedText style={styles.dataModalSubtitle}>
+                  Help improve community health outcomes
                 </ThemedText>
               </View>
+              <TouchableOpacity 
+                style={styles.closeXButton}
+                onPress={() => setShowDataContributionModal(false)}
+              >
+                <IconSymbol size={24} name="xmark" color="#666" />
+              </TouchableOpacity>
+            </View>
 
-              <View style={styles.infoStepContainer}>
-                <View style={styles.infoStepHeader}>
-                  <IconSymbol size={24} name="eye.fill" color="#4CAF50" />
-                  <ThemedText style={styles.infoStepTitle}>What We Look For</ThemedText>
+            <View style={styles.dataContributionContent}>
+              <TouchableOpacity 
+                style={styles.checkboxContainer}
+                onPress={toggleDataContribution}
+              >
+                <View style={[styles.checkbox, dataContributionEnabled && styles.checkboxChecked]}>
+                  {dataContributionEnabled && (
+                    <IconSymbol size={16} name="checkmark" color="white" />
+                  )}
                 </View>
-                <ThemedText style={styles.infoStepText}>
-                  • Nail bed color and saturation{'\n'}
-                  • Paleness indicators{'\n'}
-                  • Color variations that may suggest iron deficiency
+                <ThemedText style={styles.dataCheckboxLabel}>
+                  Share my results anonymously to support local health research and community programs.
+                </ThemedText>
+              </TouchableOpacity>
+
+              <View style={styles.dataInfoCard}>
+                <IconSymbol size={20} name="info.circle.fill" color="#2196F3" />
+                <ThemedText style={styles.dataInfoTextContent}>
+                  This means your results will be combined with others to identify broader health trends. Only anonymized data is used — your name, email, or personal identifiers are never shared.
                 </ThemedText>
               </View>
+            </View>
 
-              <View style={styles.infoStepContainer}>
-                <View style={styles.infoStepHeader}>
-                  <IconSymbol size={24} name="exclamationmark.triangle.fill" color="#FFA500" />
-                  <ThemedText style={styles.infoStepTitle}>Important Notice</ThemedText>
-                </View>
-                <ThemedText style={styles.infoStepText}>
-                  This app provides preliminary screening only. Always consult healthcare professionals for proper medical diagnosis and treatment.
-                </ThemedText>
-              </View>
-            </ScrollView>
-
+            <TouchableOpacity 
+              style={[styles.closeButton, { backgroundColor: '#4CAF50' }]}
+              onPress={() => setShowDataContributionModal(false)}
+            >
+              <ThemedText style={styles.closeButtonText}>Done</ThemedText>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1380,6 +1456,71 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     paddingHorizontal: 20,
   },
+  quickStatsCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    backgroundColor: 'rgba(69,183,209,0.1)',
+    borderRadius: 16,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 2,
+    borderColor: 'rgba(69,183,209,0.35)',
+  },
+  quickStatsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  quickStatsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  viewAllLink: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  quickStatsContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  riskBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickStatsInfo: {
+    flex: 1,
+  },
+  riskLevel: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  scanDate: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 3,
+  },
+  hemoglobinText: {
+    fontSize: 12,
+    opacity: 0.6,
+    fontWeight: '500',
+  },
+  scanPreviewImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
   scanSection: {
     paddingHorizontal: 24,
     marginBottom: 30,
@@ -1387,7 +1528,6 @@ const styles = StyleSheet.create({
   mainScanButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#20B2AA',
     borderRadius: 20,
     padding: 24,
     shadowColor: '#000',
@@ -1405,18 +1545,17 @@ const styles = StyleSheet.create({
   scanTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: 'white',
     marginBottom: 4,
   },
   scanSubtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
   },
   wellnessTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     paddingHorizontal: 24,
-    marginBottom: 16,
+    marginBottom: 20,
+    letterSpacing: 0.5,
   },
   scanButtonContainer: {
     alignItems: 'center',
@@ -1459,7 +1598,7 @@ const styles = StyleSheet.create({
   },
   interactiveCard: {
     borderWidth: 1,
-    borderColor: '#20B2AA',
+    borderColor: '#178A7E',
     borderStyle: 'dashed',
   },
   metricIcon: {
@@ -1496,29 +1635,50 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     marginRight: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxChecked: {
     backgroundColor: '#20B2AA',
-    borderColor: '#20B2AA',
+    borderColor: '#178A7E',
   },
   bottomButtonsContainer: {
     paddingHorizontal: 20,
     marginBottom: 100,
-    gap: 15,
+    gap: 12,
   },
-  tipsButton: {
+  actionBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,193,7,0.1)',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,193,7,0.2)',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  actionBarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  actionBarText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  actionButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   statsButton: {
     flexDirection: 'row',
@@ -1530,20 +1690,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(76,175,80,0.3)',
   },
-  tipsButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   statsButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-  },
-  tipsButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: 'white',
   },
   statsButtonText: {
     fontSize: 16,
@@ -1574,7 +1724,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     gap: 15,
     borderLeftWidth: 3,
-    borderLeftColor: '#20B2AA',
+    borderLeftColor: '#178A7E',
   },
   tipModalContent: {
     flex: 1,
@@ -1607,7 +1757,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: '#20B2AA',
+    borderColor: '#178A7E',
     gap: 5,
   },
   resetButtonText: {
@@ -1776,7 +1926,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 15,
     borderLeftWidth: 3,
-    borderLeftColor: '#20B2AA',
+    borderLeftColor: '#178A7E',
   },
   recommendationIcon: {
     width: 24,
@@ -2084,7 +2234,7 @@ const styles = StyleSheet.create({
   },
   nameInput: {
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 12,
@@ -2098,44 +2248,50 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   symptomCheckCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 18,
+    backgroundColor: 'rgba(31,138,112,0.15)',
+    borderRadius: 16,
+    padding: 20,
     marginHorizontal: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    marginBottom: 30,
+    borderWidth: 2,
+    borderColor: 'rgba(31,138,112,0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   symptomCheckContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   symptomCheckIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: 16,
   },
   symptomCheckInfo: {
     flex: 1,
   },
   symptomCheckTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   symptomCheckSubtitle: {
     fontSize: 14,
-    color: '#666',
+    opacity: 0.8,
     marginBottom: 6,
   },
   symptomCheckStatus: {
     fontSize: 12,
-    color: '#20B2AA',
-    fontWeight: '500',
+    color: '#1a1a1a',
+    fontWeight: '600',
   },
   healthInfoSection: {
     paddingHorizontal: 20,
@@ -2239,11 +2395,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
   },
   optionButtonSelected: {
     backgroundColor: '#20B2AA',
-    borderColor: '#20B2AA',
+    borderColor: '#178A7E',
   },
   optionButtonText: {
     fontSize: 14,
@@ -2262,7 +2418,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#999',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -2494,6 +2650,64 @@ const styles = StyleSheet.create({
   },
   bufferSpace: {
     height: 20,
+  },
+  dataContributionModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '85%',
+    maxWidth: 400,
+  },
+  dataModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#222',
+  },
+  dataModalSubtitle: {
+    fontSize: 15,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#555',
+    fontWeight: '500',
+  },
+  dataContributionContent: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+    paddingHorizontal: 5,
+  },
+  dataCheckboxLabel: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#333',
+  },
+  dataInfoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: 'rgba(33,150,243,0.1)',
+    padding: 15,
+    borderRadius: 12,
+    gap: 12,
+  },
+  dataInfoTextContent: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#555',
   },
   themeSwatches: {
     flexDirection: 'row',

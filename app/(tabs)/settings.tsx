@@ -70,7 +70,7 @@ export default function SettingsScreen() {
                     <View style={[styles.themeSwatch, { backgroundColor: theme.secondary }]} />
                     <View style={[styles.themeSwatch, { backgroundColor: theme.accent }]} />
                   </View>
-                  <ThemedText style={styles.themeOptionText}>{theme.name}</ThemedText>
+                  <ThemedText style={[styles.themeOptionText, theme.id === 'theme4' && { color: '#222' }]}>{theme.name}</ThemedText>
                   {currentTheme.id === theme.id && (
                     <IconSymbol size={20} name="checkmark.circle.fill" color="white" />
                   )}
@@ -154,10 +154,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 100,
   },
   header: {
     paddingHorizontal: 24,
+    marginTop: 10,
     marginBottom: 30,
     alignItems: 'center',
   },
@@ -166,6 +167,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
+    lineHeight: 36,
   },
   subtitle: {
     fontSize: 14,
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
   },
   themeOptionSelected: {
     borderWidth: 3,
-    borderColor: 'white',
+    borderColor: '#90EE90',
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
@@ -243,7 +245,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#90EE90',
   },
   settingCardHeader: {
     flexDirection: 'row',
@@ -277,7 +279,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#FF9800',
+    borderLeftColor: '#E67C00',
   },
   privacyCard: {
     flexDirection: 'row',
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#4CAF50',
+    borderLeftColor: '#3D8B40',
   },
   privacyText: {
     flex: 1,
@@ -303,7 +305,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#ccc',
   },
   supportCardContent: {
     flexDirection: 'row',

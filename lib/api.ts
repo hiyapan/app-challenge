@@ -136,7 +136,7 @@ function transformBackendResponse(data: BackendAnalysisResponse): AnalysisResult
   return {
     anemiaRisk,
     confidence: Math.round(confidence * 100) / 100,
-    hemoglobinLevel: Math.round(hb_pred * 10) / 10,
+    hemoglobinLevel: Math.round(hb_pred * 100) / 100,  // 2 decimal places
     recommendations,
     colorAnalysis,
   };

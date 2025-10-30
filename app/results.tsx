@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useUserContext } from '@/contexts/UserContext';
 import { analyzeImages, AnalysisResult, checkHealth } from '@/lib/api';
+
+interface SymptomCheck {
+  id: string;
+  question: string;
+  checked: boolean;
+}
 
 export default function ResultsScreen() {
   const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
@@ -14,13 +21,80 @@ export default function ResultsScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [symptoms, setSymptoms] = useState<SymptomCheck[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { selectedProfileId, addScanToProfile, getSelectedProfile } = useUserContext();
 
   useEffect(() => {
     if (imageUri) {
       performAnalysis();
+      loadSymptoms();
+      loadUserProfile();
     }
   }, [imageUri]);
+
+  const loadSymptoms = async () => {
+    try {
+      const symptomsData = await AsyncStorage.getItem('user_symptoms');
+      if (symptomsData) {
+        const parsedSymptoms = JSON.parse(symptomsData);
+        setSymptoms(parsedSymptoms);
+      }
+    } catch (error) {
+      console.error('Error loading symptoms:', error);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    try {
+      const savedProfile = await AsyncStorage.getItem('user_wellness_profile');
+      if (savedProfile) {
+        const profile = JSON.parse(savedProfile);
+        setUserProfile(profile);
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
+  };
+
+  const getNormalRange = () => {
+    if (!userProfile || !userProfile.gender || !userProfile.age) {
+      return 'Women: 12.0-15.5 g/dL\nMen: 13.5-17.5 g/dL';
+    }
+
+    const gender = userProfile.gender;
+    const age = userProfile.age;
+
+    // Adults (using simplified clinical references)
+    if (gender === 'Female') {
+      // Post-menopausal women (typically 55+)
+      if (age === '55+') {
+        return '12.0-16.0 g/dL';
+      }
+      return '12.0-15.5 g/dL';
+    } else if (gender === 'Male') {
+      // Older men may have slightly lower ranges
+      if (age === '55+') {
+        return '12.5-17.0 g/dL';
+      }
+      return '13.5-17.5 g/dL';
+    }
+
+    // Default for 'Other' or unspecified
+    return '12.0-17.5 g/dL';
+  };
+
+  const getRangeLabel = () => {
+    if (!userProfile || !userProfile.gender) return 'Normal Range';
+    switch (userProfile.gender) {
+      case 'Female':
+        return 'Normal Range (Women)';
+      case 'Male':
+        return 'Normal Range (Men)';
+      default:
+        return 'Normal Range';
+    }
+  };
 
   const performAnalysis = async () => {
     try {
@@ -157,17 +231,51 @@ export default function ResultsScreen() {
                   <ThemedText style={styles.hemoglobinUnit}>g/dL</ThemedText>
                 </View>
                 <View style={styles.hemoglobinReference}>
-                  <ThemedText style={styles.referenceText}>Normal Range:</ThemedText>
+                  <ThemedText style={styles.referenceText}>{getRangeLabel()}:</ThemedText>
                   <ThemedText style={styles.referenceRange}>
-                    Women: 12.0-15.5 g/dL{'\n'}Men: 13.5-17.5 g/dL
+                    {getNormalRange()}
                   </ThemedText>
                 </View>
               </View>
             </View>
 
+            {/* Self-Reported Symptoms Section */}
+            {symptoms.filter(s => s.checked).length > 0 && (
+              <View style={styles.symptomsContainer}>
+                <ThemedText style={styles.sectionTitle}>Self-Reported Symptoms</ThemedText>
+                <ThemedText style={styles.symptomsSummary}>
+                  You reported {symptoms.filter(s => s.checked).length} symptom{symptoms.filter(s => s.checked).length > 1 ? 's' : ''}:
+                </ThemedText>
+                {symptoms.filter(s => s.checked).slice(0, 3).map((symptom) => (
+                  <View key={symptom.id} style={styles.symptomItem}>
+                    <IconSymbol size={14} name="circle.fill" color="#FF9800" />
+                    <ThemedText style={styles.symptomText}>{symptom.question}</ThemedText>
+                  </View>
+                ))}
+                {symptoms.filter(s => s.checked).length > 3 && (
+                  <ThemedText style={styles.moreSymptoms}>
+                    +{symptoms.filter(s => s.checked).length - 3} more symptom{symptoms.filter(s => s.checked).length - 3 > 1 ? 's' : ''}
+                  </ThemedText>
+                )}
+              </View>
+            )}
+
             <View style={styles.recommendationsContainer}>
               <ThemedText style={styles.sectionTitle}>Recommendations</ThemedText>
-              {analysis.recommendations.map((recommendation, index) => (
+              <ThemedText style={styles.recommendationSummary}>
+                {analysis.anemiaRisk === 'Low' && symptoms.filter(s => s.checked).length === 0
+                  ? 'Your results look good! Continue maintaining a balanced diet rich in iron and monitoring your wellness.'
+                  : analysis.anemiaRisk === 'Low' && symptoms.filter(s => s.checked).length > 0
+                  ? `The scan shows low risk, but based on your ${symptoms.filter(s => s.checked).length} reported symptom${symptoms.filter(s => s.checked).length > 1 ? 's' : ''}, consider monitoring your energy levels and diet closely.`
+                  : analysis.anemiaRisk === 'Medium' && symptoms.filter(s => s.checked).length > 0
+                  ? `Based on your scan results and ${symptoms.filter(s => s.checked).length} reported symptom${symptoms.filter(s => s.checked).length > 1 ? 's' : ''}, focus on increasing iron-rich foods, staying hydrated, and getting adequate rest. Continue monitoring your wellness.`
+                  : analysis.anemiaRisk === 'Medium'
+                  ? 'Focus on iron-rich foods like leafy greens, lean meats, and legumes. Stay hydrated and maintain good sleep habits. Monitor your levels regularly.'
+                  : analysis.anemiaRisk === 'High'
+                  ? 'Multiple indicators suggest focused attention on wellness. Prioritize iron-rich nutrition, hydration, and adequate rest. Consider consulting with a healthcare professional for medical guidance.'
+                  : 'Consider increasing iron intake through diet and monitoring your symptoms regularly.'}
+              </ThemedText>
+              {analysis.recommendations.slice(0, 2).map((recommendation, index) => (
                 <View key={index} style={styles.recommendationItem}>
                   <IconSymbol size={16} name="checkmark.circle.fill" color="#4CAF50" />
                   <ThemedText style={styles.recommendationText}>{recommendation}</ThemedText>
@@ -176,8 +284,7 @@ export default function ResultsScreen() {
             </View>
 
             <ThemedText style={styles.disclaimer}>
-              * This is a preliminary screening tool and not a medical diagnosis. 
-              Please consult with a healthcare professional for proper medical evaluation.
+              * This tool is designed for hemoglobin monitoring purposes. Please consult with a healthcare professional for medical diagnosis and treatment.
             </ThemedText>
           </View>
         ) : null}
@@ -220,7 +327,7 @@ const styles = StyleSheet.create({
     height: width * 0.6,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -296,23 +403,30 @@ const styles = StyleSheet.create({
   hemoglobinDisplay: {
     backgroundColor: 'rgba(0,0,0,0.05)',
     padding: 20,
+    paddingTop: 35,
+    paddingBottom: 25,
     borderRadius: 10,
     alignItems: 'center',
+    overflow: 'visible',
   },
   hemoglobinValue: {
     flexDirection: 'row',
     alignItems: 'baseline',
     marginBottom: 15,
+    paddingTop: 0,
+    minHeight: 50,
   },
   hemoglobinNumber: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#007AFF',
+    lineHeight: 42,
   },
   hemoglobinUnit: {
     fontSize: 16,
     marginLeft: 5,
     opacity: 0.7,
+    marginBottom: 2,
   },
   hemoglobinReference: {
     alignItems: 'center',
@@ -321,14 +435,56 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 5,
+    opacity: 0.7,
   },
   referenceRange: {
     fontSize: 12,
-    opacity: 0.7,
     textAlign: 'center',
+    opacity: 0.6,
+  },
+  symptomsContainer: {
+    marginBottom: 25,
+    backgroundColor: 'rgba(255,152,0,0.1)',
+    padding: 15,
+    borderRadius: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FF9800',
+  },
+  symptomsSummary: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+    opacity: 0.9,
+  },
+  symptomItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+    paddingLeft: 5,
+    gap: 10,
+  },
+  symptomText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+    opacity: 0.8,
+  },
+  moreSymptoms: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    opacity: 0.7,
+    marginTop: 4,
+    paddingLeft: 15,
   },
   recommendationsContainer: {
     marginBottom: 20,
+  },
+  recommendationSummary: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 16,
+    paddingHorizontal: 10,
+    opacity: 0.9,
   },
   recommendationItem: {
     flexDirection: 'row',
@@ -349,6 +505,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     paddingHorizontal: 10,
+    lineHeight: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -372,7 +529,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: '#0056CC',
   },
   primaryButtonText: {
     color: 'white',

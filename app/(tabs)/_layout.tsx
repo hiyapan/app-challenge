@@ -10,20 +10,27 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const tabBarBg = colorScheme === 'dark' ? '#1a1d1e' : '#e8e8e8';
+  const tabBarBorder = colorScheme === 'dark' ? '#2a2d2e' : '#ccc';
+  const inactiveTint = colorScheme === 'dark' ? '#999' : '#888';
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarInactiveTintColor: inactiveTint,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            backgroundColor: tabBarBg,
           },
-          default: {},
+          default: {
+            backgroundColor: tabBarBg,
+            borderTopColor: tabBarBorder,
+          },
         }),
       }}
       initialRouteName="wellness">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TextInput } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useUserContext, ScanResult, UserProfile } from '@/contexts/UserContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { TrendChart } from '@/components/TrendChart';
 
 export default function StatsScreen() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -28,7 +29,7 @@ export default function StatsScreen() {
 
   const getResultColor = (result: string) => {
     switch (result) {
-      case 'Low Risk': return '#4CAF50';
+      case 'Low Risk': return '#1F8A70';
       case 'Medium Risk': return '#FF9800';  
       case 'High Risk': return '#F44336';
       default: return '#757575';
@@ -82,6 +83,35 @@ export default function StatsScreen() {
 
   const selectedUserData = selectedProfileId ? profiles.find(u => u.id === selectedProfileId) : profiles[0];
 
+  const exportScans = async () => {
+    if (!selectedUserData || selectedUserData.scans.length === 0) {
+      Alert.alert('No Data', 'No scans available to export.');
+      return;
+    }
+
+    try {
+      const exportData = {
+        profileName: selectedUserData.name,
+        exportDate: new Date().toISOString(),
+        totalScans: selectedUserData.scans.length,
+        scans: selectedUserData.scans.map(scan => ({
+          date: scan.date,
+          result: scan.result,
+          hemoglobinLevel: scan.hemoglobinLevel
+        }))
+      };
+
+      const text = `AnemoDx Scan History - ${selectedUserData.name}\n\n` + JSON.stringify(exportData, null, 2);
+      await Share.share({ 
+        message: text, 
+        title: `AnemoDx Scan History - ${selectedUserData.name}` 
+      });
+    } catch (e) {
+      console.error('Export failed:', e);
+      Alert.alert('Export Failed', 'Unable to export scan data.');
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -119,6 +149,14 @@ export default function StatsScreen() {
           </ScrollView>
         </View>
 
+        {/* Trend Chart */}
+        {selectedUserData && selectedUserData.scans.length > 0 && (
+          <TrendChart 
+            scans={selectedUserData.scans} 
+            themeColor={currentTheme.primary}
+          />
+        )}
+
         {/* Stats Overview */}
         {selectedUserData && (
           <View style={styles.statsContainer}>
@@ -150,26 +188,35 @@ export default function StatsScreen() {
             <View style={styles.historyHeader}>
               <ThemedText style={styles.sectionTitle}>Scan History</ThemedText>
               {selectedUserData.scans.length > 0 && (
-                <TouchableOpacity 
-                  style={styles.clearHistoryButton}
-                  onPress={() => {
-                    Alert.alert(
-                      'Clear Scan History',
-                      `Are you sure you want to clear all ${selectedUserData.scans.length} scan${selectedUserData.scans.length !== 1 ? 's' : ''} for ${selectedUserData.name}?`,
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        { 
-                          text: 'Clear All', 
-                          style: 'destructive',
-                          onPress: () => clearScansForProfile(selectedUserData.id)
-                        }
-                      ]
-                    );
-                  }}
-                >
-                  <IconSymbol size={18} name="trash" color="#F44336" />
-                  <ThemedText style={styles.clearHistoryText}>Clear All</ThemedText>
-                </TouchableOpacity>
+                <View style={styles.historyActions}>
+                  <TouchableOpacity 
+                    style={styles.exportButton}
+                    onPress={exportScans}
+                  >
+                    <IconSymbol size={18} name="square.and.arrow.up" color="#007AFF" />
+                    <ThemedText style={styles.exportButtonText}>Export</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.clearHistoryButton}
+                    onPress={() => {
+                      Alert.alert(
+                        'Clear Scan History',
+                        `Are you sure you want to clear all ${selectedUserData.scans.length} scan${selectedUserData.scans.length !== 1 ? 's' : ''} for ${selectedUserData.name}?`,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { 
+                            text: 'Clear All', 
+                            style: 'destructive',
+                            onPress: () => clearScansForProfile(selectedUserData.id)
+                          }
+                        ]
+                      );
+                    }}
+                  >
+                    <IconSymbol size={18} name="trash" color="#F44336" />
+                    <ThemedText style={styles.clearHistoryText}>Clear All</ThemedText>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
             
@@ -238,7 +285,7 @@ export default function StatsScreen() {
         onRequestClose={() => setShowScanDetail(null)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.scanDetailModalContent}>
+          <ThemedView style={styles.scanDetailModalContent}>
             <View style={styles.scanDetailHeader}>
               <ThemedText style={styles.modalTitle}>Scan Details</ThemedText>
               <TouchableOpacity 
@@ -309,7 +356,7 @@ export default function StatsScreen() {
                     <ThemedText style={styles.scanDetailSectionTitle}>Recommendations</ThemedText>
                     {showScanDetail.recommendations.map((recommendation, index) => (
                       <View key={index} style={styles.scanDetailRecommendationItem}>
-                        <IconSymbol size={16} name="checkmark.circle.fill" color="#4CAF50" />
+                        <IconSymbol size={16} name="checkmark.circle.fill" color="#1F8A70" />
                         <ThemedText style={styles.scanDetailRecommendationText}>{recommendation}</ThemedText>
                       </View>
                     ))}
@@ -323,7 +370,7 @@ export default function StatsScreen() {
                 </View>
               </ScrollView>
             )}
-          </View>
+          </ThemedView>
         </View>
       </Modal>
 
@@ -428,7 +475,7 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 90,
   },
   header: {
     paddingHorizontal: 20,
@@ -455,8 +502,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     paddingHorizontal: 20,
     marginBottom: 15,
-    color: '#ddd',
-    opacity: 0.9,
   },
   userScrollView: {
     paddingLeft: 20,
@@ -498,7 +543,7 @@ const styles = StyleSheet.create({
     marginRight: 20,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#20B2AA',
+    borderColor: '#178A7E',
     borderStyle: 'dashed',
     minWidth: 100,
   },
@@ -513,12 +558,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   statsBackground: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: 'rgba(0,0,0,0.08)',
     borderRadius: 16,
     padding: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 2,
     elevation: 1,
   },
@@ -529,7 +574,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.02)',
+    backgroundColor: 'rgba(0,0,0,0.12)',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
@@ -539,7 +584,6 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ccc',
     marginBottom: 14,
   },
   firstStatNumber: {
@@ -547,7 +591,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#ddd',
+    opacity: 0.7,
     textAlign: 'center',
     fontWeight: '700',
     lineHeight: 12,
@@ -561,6 +605,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
   },
+  historyActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 122, 255, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 122, 255, 0.5)',
+  },
+  exportButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
   clearHistoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -570,7 +634,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: 'rgba(244, 67, 54, 0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(244, 67, 54, 0.3)',
+    borderColor: 'rgba(244, 67, 54, 0.5)',
   },
   clearHistoryText: {
     fontSize: 13,
@@ -610,7 +674,7 @@ const styles = StyleSheet.create({
   confidence: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#4CAF50',
+    color: '#1F8A70',
   },
   emptyState: {
     alignItems: 'center',
@@ -681,7 +745,7 @@ const styles = StyleSheet.create({
   },
   textInputContainer: {
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     borderRadius: 10,
     padding: 15,
     backgroundColor: '#f9f9f9',
@@ -699,7 +763,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
@@ -737,7 +801,7 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     borderRadius: 10,
     padding: 15,
     backgroundColor: '#f9f9f9',
@@ -756,7 +820,6 @@ const styles = StyleSheet.create({
   },
   // Scan Detail Modal Styles
   scanDetailModalContent: {
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 20,
     width: '95%',
@@ -796,7 +859,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
   },
   scanDetailSection: {
     marginBottom: 20,
@@ -804,7 +867,6 @@ const styles = StyleSheet.create({
   scanDetailSectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
     marginBottom: 12,
   },
   scanDetailRiskContainer: {
@@ -826,12 +888,12 @@ const styles = StyleSheet.create({
   },
   scanDetailConfidence: {
     fontSize: 16,
-    color: '#4CAF50',
+    color: '#1F8A70',
     fontWeight: '600',
   },
   scanDetailDate: {
     fontSize: 16,
-    color: '#555',
+    opacity: 0.9,
     backgroundColor: 'rgba(0,0,0,0.05)',
     padding: 15,
     borderRadius: 10,
@@ -845,13 +907,14 @@ const styles = StyleSheet.create({
   },
   hemoglobinValue: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'flex-end',
     marginBottom: 15,
   },
   hemoglobinNumber: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#007AFF',
+    lineHeight: 38,
   },
   hemoglobinUnit: {
     fontSize: 16,
@@ -865,11 +928,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 5,
+    opacity: 0.7,
   },
   hemoglobinReferenceText: {
     fontSize: 12,
-    opacity: 0.7,
     textAlign: 'center',
+    opacity: 0.6,
   },
   scanDetailRecommendationItem: {
     flexDirection: 'row',
@@ -884,7 +948,6 @@ const styles = StyleSheet.create({
     marginLeft: 10,
     fontSize: 14,
     lineHeight: 20,
-    color: '#333',
   },
   scanDetailDisclaimer: {
     backgroundColor: 'rgba(255,152,0,0.1)',
@@ -895,7 +958,7 @@ const styles = StyleSheet.create({
   scanDetailDisclaimerText: {
     fontSize: 12,
     fontStyle: 'italic',
-    color: '#666',
+    opacity: 0.7,
     textAlign: 'center',
     lineHeight: 18,
   },
@@ -917,7 +980,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#ccc',
   },
   wellnessCardHeader: {
     flexDirection: 'row',
@@ -1009,7 +1072,7 @@ const styles = StyleSheet.create({
   deleteCancelButton: {
     flex: 1,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',

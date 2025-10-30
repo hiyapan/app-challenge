@@ -34,8 +34,8 @@ async def log_requests(request: Request, call_next):
     return resp
 
 # -------------- Load artifact --------------
-# Expect: backend/artifacts/hb_model_full_pipeline.pkl
-ART = (Path(__file__).resolve().parent / "artifacts" / "hb_model_full_pipeline.pkl")
+# Expect: backend/artifacts/hbg_model_full_pipeline.pkl
+ART = (Path(__file__).resolve().parent / "artifacts" / "hbg_model_full_pipeline.pkl")
 if not ART.exists():
     raise RuntimeError(f"Artifact not found at: {ART}")
 
@@ -113,19 +113,21 @@ def _predict_from_embeddings(embs: Iterable[np.ndarray]) -> float:
     mean_emb = np.mean(np.stack(embs, axis=0), axis=0, dtype=np.float32).reshape(1, -1)
 
     exp_in = _expected_in_dim()
-    got_in = mean_emb.shape[1]
-    if got_in != exp_in:
+    
+    # Pad embeddings if needed to match model's expected dimensions
+    if mean_emb.shape[1] < exp_in:
+        padding = np.zeros((1, exp_in - mean_emb.shape[1]), dtype=np.float32)
+        mean_emb = np.concatenate([mean_emb, padding], axis=1)
+        print(f"Padded embeddings from {mean_emb.shape[1] - padding.shape[1]} to {mean_emb.shape[1]} dimensions")
+    elif mean_emb.shape[1] > exp_in:
         raise HTTPException(
             status_code=500,
-            detail=(
-                f"Feature dimension mismatch: got {got_in}, expected {exp_in}. "
-                f'Check that artifact "{ART.name}" was trained on pure 512-D embeddings.'
-            ),
+            detail=(f"Feature dimension mismatch: got {mean_emb.shape[1]}, expected {exp_in}. "
+                    f'Check artifact "{ART.name}".')
         )
-
+    
     X = pre.transform(mean_emb) if pre is not None else mean_emb
-    hb = float(model.predict(X)[0])
-    return hb
+    return float(model.predict(X)[0])
 
 # -------------- Endpoints --------------
 @app.get("/health")

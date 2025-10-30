@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     marginRight: 20,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#FF6B6B',
+    borderColor: '#CC5555',
     borderStyle: 'dashed',
     minWidth: 100,
   },

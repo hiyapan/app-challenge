@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, TextInput, Pressable, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, TextInput, Pressable, Image, ActivityIndicator } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions, FlashMode } from 'expo-camera';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,6 +7,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useUserContext } from '@/contexts/UserContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { captureFromESP32, checkESP32Health, getESP32Config } from '@/lib/esp32Service';
+import { InfoGuide } from '@/components/InfoGuide';
 
 export default function CaptureScreen() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -16,6 +18,8 @@ export default function CaptureScreen() {
   const [showAddProfileModal, setShowAddProfileModal] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [showHandGuide, setShowHandGuide] = useState(true);
+  const [isCapturingESP32, setIsCapturingESP32] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const cameraRef = useRef<CameraView>(null);
   const { profiles, selectedProfileId, selectProfile, getSelectedProfile, loadProfiles, addProfile } = useUserContext();
   const { currentTheme } = useTheme();
@@ -83,6 +87,54 @@ export default function CaptureScreen() {
     }
   }
 
+  async function captureFromESP32Device() {
+    setIsCapturingESP32(true);
+    
+    try {
+      // First check if ESP32 is reachable
+      const isHealthy = await checkESP32Health();
+      
+      if (!isHealthy) {
+        Alert.alert(
+          'ESP32-CAM Not Found',
+          'Could not reach ESP32-CAM. Please check:\n\n' +
+          '1. ESP32 is powered on\n' +
+          '2. Connected to same WiFi network\n' +
+          '3. IP address is correct in lib/esp32Service.ts',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      // Capture image from ESP32
+      const result = await captureFromESP32();
+      
+      if (result.success) {
+        // Go directly to results
+        router.push({
+          pathname: '/results',
+          params: { imageUri: result.imageUri }
+        });
+      } else {
+        // Show specific error
+        Alert.alert(
+          'Capture Failed',
+          result.error,
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Unexpected error while capturing from ESP32-CAM',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsCapturingESP32(false);
+    }
+  }
+
+
   const createNewProfile = async () => {
     if (newProfileName.trim()) {
       try {
@@ -116,11 +168,48 @@ export default function CaptureScreen() {
         </TouchableOpacity>
       </View>
       
-      <View style={styles.titleSection}>
-        <ThemedText style={styles.title}>Anemia Detection</ThemedText>
-        <ThemedText style={styles.subtitle}>
-          Position your hand in the camera frame
+      {/* ESP32 Device Scan Section */}
+      <View style={[styles.esp32Section, { backgroundColor: `${currentTheme.accent}15`, borderColor: `${currentTheme.accent}40` }]}>
+        <View style={styles.esp32Header}>
+          <IconSymbol size={24} name="sensor.fill" color={currentTheme.accent} />
+          <ThemedText style={[styles.esp32SectionTitle, { color: currentTheme.accent }]}>Scan with Device</ThemedText>
+        </View>
+        <ThemedText style={styles.esp32Description}>
+          Use ESP32-CAM external device for scanning
         </ThemedText>
+        <TouchableOpacity 
+          style={[styles.esp32Button, { backgroundColor: currentTheme.accent, borderColor: currentTheme.primary }]}
+          onPress={captureFromESP32Device}
+          disabled={isCapturingESP32}
+        >
+          {isCapturingESP32 ? (
+            <>
+              <ActivityIndicator size="small" color="white" style={styles.esp32ButtonIcon} />
+              <ThemedText style={styles.esp32ButtonText}>Capturing...</ThemedText>
+            </>
+          ) : (
+            <>
+              <IconSymbol size={20} name="camera.fill" color="white" style={styles.esp32ButtonIcon} />
+              <ThemedText style={styles.esp32ButtonText}>Capture</ThemedText>
+            </>
+          )}
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.infoButton, { backgroundColor: `${currentTheme.primary}15`, borderColor: `${currentTheme.primary}30` }]}
+          onPress={() => setShowInfoModal(true)}
+        >
+          <IconSymbol size={18} name="info.circle.fill" color={currentTheme.primary} />
+          <ThemedText style={[styles.infoButtonText, { color: currentTheme.primary }]}>Capture Instructions</ThemedText>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Phone Camera Section */}
+      <View style={styles.phoneCameraSection}>
+        <View style={styles.phoneCameraHeader}>
+          <IconSymbol size={20} name="camera.fill" color={currentTheme.primary} />
+          <ThemedText style={[styles.phoneCameraTitle, { color: currentTheme.primary }]}>Scan with Phone Camera</ThemedText>
+        </View>
       </View>
       
       <CameraView 
@@ -129,21 +218,14 @@ export default function CaptureScreen() {
         flash={flash}
         ref={cameraRef}
       >
-        {showHandGuide && (
-          <Pressable 
-            style={styles.handGuideOverlay}
-            onPress={() => setShowHandGuide(false)}
-          >
-            <View style={styles.handGuideContainer}>
-              <Image 
-                source={require('@/assets/images/hand-1352e3595671d084b36c6bce653f2e0f.png')}
-                style={styles.handImage}
-                resizeMode="contain"
-              />
-              <ThemedText style={styles.guideText}>Tap to dismiss</ThemedText>
-            </View>
-          </Pressable>
-        )}
+        {/* Region overlay boxes */}
+        <View style={styles.regionsOverlay}>
+          {/* Nail region box (top) */}
+          <View style={[styles.regionBox, styles.nailRegionBox]}>
+            <ThemedText style={styles.regionLabel}>NAILS</ThemedText>
+          </View>
+        </View>
+        
         
         <View style={styles.buttonContainer}>
           <View style={styles.leftControls}>
@@ -175,7 +257,7 @@ export default function CaptureScreen() {
         onRequestClose={() => setShowProfileSelector(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.profileModalContent}>
+          <ThemedView style={styles.profileModalContent}>
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Select Profile</ThemedText>
               <TouchableOpacity 
@@ -231,9 +313,16 @@ export default function CaptureScreen() {
                 </View>
               </TouchableOpacity>
             </ScrollView>
-          </View>
+          </ThemedView>
         </View>
       </Modal>
+
+      {/* Info Guide Modal */}
+      <InfoGuide 
+        visible={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        themeColor={currentTheme.primary}
+      />
 
       {/* Add Profile Modal */}
       <Modal
@@ -243,7 +332,7 @@ export default function CaptureScreen() {
         onRequestClose={() => setShowAddProfileModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.addProfileModalContent}>
+          <ThemedView style={styles.addProfileModalContent}>
             <View style={styles.modalHeader}>
               <ThemedText style={styles.modalTitle}>Add New Profile</ThemedText>
               <TouchableOpacity 
@@ -284,9 +373,10 @@ export default function CaptureScreen() {
                 <ThemedText style={styles.createButtonText}>Create Profile</ThemedText>
               </TouchableOpacity>
             </View>
-          </View>
+          </ThemedView>
         </View>
       </Modal>
+
     </ThemedView>
   );
 }
@@ -316,20 +406,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingBottom: 10,
   },
-  titleSection: {
-    paddingHorizontal: 20,
+  esp32Section: {
+    marginHorizontal: 20,
     marginBottom: 15,
+    padding: 20,
+    borderRadius: 15,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  esp32Header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
     marginBottom: 8,
   },
-  subtitle: {
+  esp32SectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  esp32Description: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginBottom: 15,
+  },
+  phoneCameraSection: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+  },
+  phoneCameraHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  phoneCameraTitle: {
     fontSize: 16,
-    textAlign: 'center',
-    opacity: 0.8,
+    fontWeight: '600',
   },
   camera: {
     flex: 1,
@@ -337,6 +453,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 90,
     overflow: 'hidden',
+    minHeight: 300,
   },
   cameraOverlay: {
     flex: 1,
@@ -424,16 +541,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'flex-end',
+    paddingTop: 60,
     zIndex: 100,
   },
   handGuideContainer: {
     justifyContent: 'center',
     alignItems: 'flex-end',
-    marginRight: -180,
+    marginRight: -120,
   },
   handImage: {
-    width: 450,
-    height: 450,
+    width: 320,
+    height: 320,
     opacity: 0.5,
     transform: [{ rotate: '-90deg' }],
   },
@@ -442,6 +560,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 20,
+    textShadowColor: 'rgba(0,0,0,0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  regionsOverlay: {
+    position: 'absolute',
+    top: '20%',
+    left: '20%',
+    right: '20%',
+    bottom: '20%',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  regionBox: {
+    borderWidth: 3,
+    borderColor: 'rgba(32,178,170,0.9)',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  nailRegionBox: {
+    height: '35%',  // Top box for nails
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  skinRegionBox: {
+    height: '35%',  // Bottom box for skin
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  regionLabel: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
     textShadowColor: 'rgba(0,0,0,0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -498,7 +650,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileModalContent: {
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 20,
     width: '90%',
@@ -518,7 +669,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
   },
   closeButton: {
     padding: 5,
@@ -552,12 +702,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
-    color: '#333',
   },
   profileOptionScans: {
     fontSize: 12,
     opacity: 0.7,
-    color: '#666',
   },
   addProfileOption: {
     flexDirection: 'row',
@@ -585,10 +733,8 @@ const styles = StyleSheet.create({
   addProfileDescription: {
     fontSize: 12,
     opacity: 0.7,
-    color: '#666',
   },
   addProfileModalContent: {
-    backgroundColor: 'white',
     borderRadius: 20,
     padding: 25,
     width: '85%',
@@ -605,7 +751,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 10,
-    color: '#333',
   },
   nameInput: {
     borderWidth: 2,
@@ -637,6 +782,115 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  esp32Button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  esp32ButtonIcon: {
+    marginRight: 8,
+  },
+  esp32ButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 10,
+    gap: 8,
+  },
+  infoButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  previewModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewModalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  previewTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  previewCloseButton: {
+    padding: 5,
+  },
+  previewImage: {
+    width: '100%',
+    height: 400,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  previewButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  previewRetakeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  previewRetakeText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  previewUseButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  previewUseText: {
     fontSize: 16,
     fontWeight: '600',
     color: 'white',

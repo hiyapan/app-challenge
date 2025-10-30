@@ -276,13 +276,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
     minWidth: 100,
     alignItems: 'center',
   },
   optionButtonSelected: {
     backgroundColor: '#FF6B6B',
-    borderColor: '#FF6B6B',
+    borderColor: '#CC5555',
   },
   optionButtonText: {
     fontSize: 14,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
+    borderLeftColor: '#E67C00',
     gap: 12,
   },
   infoIcon: {
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: 'transparent',
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: '#aaa',
   },
   skipSetupText: {
     color: '#666',

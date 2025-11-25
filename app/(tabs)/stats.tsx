@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, TextInput, Share } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useUserContext, ScanResult, UserProfile } from '@/contexts/UserContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import React, { useEffect, useState } from 'react';
+import { Alert, Modal, ScrollView, Share, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { TrendChart } from '@/components/TrendChart';
+import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ThemedText } from '@/components/ui/ThemedText';
+import { ThemedView } from '@/components/ui/ThemedView';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ScanResult, UserProfile, useUserContext } from '@/contexts/UserContext';
 
 export default function StatsScreen() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);

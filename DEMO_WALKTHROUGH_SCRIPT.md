@@ -1,189 +1,179 @@
-# AnemoDx Demo Walkthrough Script 🎬
+# AnemoDx Demo Guide
 
-**Presenters:** Hiya, Anya, Izzy  
-**Duration:** ~6-7 minutes  
-**Format:** Demo sections only (no intro/conclusion)
+This document summarizes how to demo the AnemoDx system end to end. It is written as a high-level guide rather than a word-for-word script.
 
----
+## Demo Goals
 
-## 📱 PART 1: MOBILE APP DEMO
+- Show how AnemoDx enables non-invasive anemia screening from a smartphone.
+- Highlight the dual capture pathways: phone camera and NailScan Pro hardware.
+- Demonstrate how results are interpreted, tracked, and shared.
+- Explain the research foundation, backend model, and validation.
 
-### **HIYA - Wellness Dashboard & Profile Management** (1 minute)
+## High-Level Flow
 
-When opening AnemoDx, users are greeted with the Wellness dashboard. This is the personal health hub where users can start a hemoglobin scan, track levels over time, and access health tools. There's a quick info button here that explains how to use the app and interpret results.
-
-One of the most powerful features is multi-profile support. This allows families to track multiple members separately, or enables community health workers to manage dozens of people from a single device. Users can tap here to select which profile they're scanning for and create new profiles. Each profile maintains its own complete scan history and personalized hemoglobin trends.
-
-The dashboard also includes a symptom checker, where users can track common anemia symptoms like fatigue, shortness of breath, or cold hands and feet. There are also educational resources on iron-rich foods and wellness tips to help users maintain healthy hemoglobin levels.
-
----
-
-### **ANYA - Capture Screen & Dual Methods** (1.5 minutes)
-
-Now here's the capture screen, where the actual hemoglobin measurement happens. AnemoDx offers two different capture methods, and this dual approach addresses both accessibility and accuracy needs.
-
-The first method uses the phone's built-in camera for personal, at-home monitoring. When scrolling down here, users see the camera preview with a nail positioning overlay that guides them to capture the optimal image. There are flash controls and the ability to flip between front and rear cameras, making it user-friendly for self-screening. Users simply position their fingernails in this highlighted region, and the overlay ensures consistent framing for analysis.
-
-This mobile app approach makes hemoglobin monitoring accessible to everyone—anyone with a smartphone can download the app and start tracking their levels immediately at home, for free. This is perfect for general wellness monitoring, occasional check-ins, or for individuals with low-to-moderate anemia risk who want to stay on top of their health.
-
-However, the app also integrates with an external hardware device, which will be demonstrated in a moment. This section at the top allows users to capture images using the dedicated NailScan Pro scanner. This is designed for individuals who need more accurate, frequent monitoring—such as pregnant women, people with chronic anemia, athletes in training, or anyone at higher risk who wants clinical-grade consistency in their measurements.
-
-When a user taps the capture button with either method, the photo is immediately sent to the backend AI model for analysis. Within seconds, comprehensive results appear on screen.
+1. Mobile app overview (Wellness dashboard and profiles).
+2. Capture flow (phone camera and NailScan Pro).
+3. Results and longitudinal tracking (Stats tab and trend chart).
+4. Hardware overview (NailScan Pro design and rationale).
+5. Backend pipeline and accuracy.
 
 ---
 
-### **IZZY - Results Screen & Health Tracking** (2 minutes)
+## 1. Mobile App Overview
 
-Here's the results screen, where users get their hemoglobin prediction and health insights. The first thing visible is a clear risk assessment—Low, Medium, or High—color-coded for quick understanding. Green means hemoglobin levels are healthy, yellow suggests monitoring iron intake more carefully, and red indicates that medical consultation is recommended.
+### Wellness Dashboard and Profiles
 
-But the app doesn't just give a vague risk level. It predicts the actual hemoglobin level in grams per deciliter. Notice how both the predicted level and the personalized normal range are displayed right below it. These ranges automatically adjust based on the age and gender information in the user's profile, because hemoglobin levels vary significantly between demographics. For example, women typically have a normal range of twelve to fifteen point five grams per deciliter, while men have thirteen point five to seventeen point five.
+- When the app opens, the user lands on the Wellness dashboard.
+- The dashboard is the central hub for:
+  - Starting a hemoglobin scan.
+  - Viewing the latest results.
+  - Accessing health tools and educational content.
+- The app supports multiple profiles so that families or community health workers can track many individuals separately.
+  - Each profile has its own color, history, and trend data.
 
-The color analysis section shows the exact RGB values extracted from the nail bed image, providing transparency in how the AI model makes its prediction. Below that are personalized recommendations tailored to the specific hemoglobin level—things like iron-rich foods to incorporate into the diet, lifestyle adjustments, and how frequently to rescan for monitoring progress.
+### Health Tools
 
-Users can save their results to their profile with one tap, creating a longitudinal health record. This is where the real power of AnemoDx comes in—not just a single measurement, but continuous monitoring over time.
-
-Here's the Stats tab. This is where tracking becomes powerful. The visual trend chart displays hemoglobin levels and risk categories across the last ten scans, with color-coded points so users can immediately see whether their levels are improving, staying stable, or declining. This helps users understand the impact of dietary changes, iron supplements, or medical treatments.
-
-Below the trend chart, users can browse their complete scan history with thumbnail images, dates, hemoglobin values, and risk levels. Users can also export or share these results with their healthcare providers, making AnemoDx a bridge between self-monitoring and professional medical care.
-
----
-
-## 🔬 PART 2: RESEARCH FOUNDATION
-
-### **HIYA - Building on Yakimov Research** (45 seconds)
-
-The work behind AnemoDx builds directly on research by Yakimov and colleagues, who demonstrated that non-invasive anemia detection through nail bed image analysis is scientifically viable using machine learning models.
-
-However, one critical limitation was identified in their dataset—significant variance in lighting conditions and nail positioning across different images. Some images were taken in bright lighting, others in dim environments. Some nails were photographed straight-on, others at angles. This inconsistency introduced noise that limited real-world reliability.
-
-This led to the question: what if capture conditions could be standardized to ensure every image had consistent lighting, positioning, and distance? That's what drove the development of the hardware solution.
+- The dashboard includes a symptom checker for common anemia-related symptoms such as fatigue, shortness of breath, or cold extremities.
+- Additional sections provide guidance on iron-rich foods, lifestyle tips, and wellness habits to support healthy hemoglobin levels.
 
 ---
 
-## 🔧 PART 3: NAILSCAN PRO HARDWARE DEMO
+## 2. Capture Flow
 
-### **ANYA - Hardware Design & Use Case** (2 minutes)
+### Phone Camera Capture
 
-Here's the **NailScan Pro**—a custom-built hardware scanner designed specifically to provide clinical-grade accuracy through standardized image capture conditions.
+- On the Capture tab, users can take a fingernail photo using the phone camera.
+- A nail positioning overlay guides the finger into the optimal region for consistent framing.
+- Camera controls (flash, camera switching) help adapt to different environments.
+- This pathway is designed for accessible, at-home monitoring using only a smartphone.
 
-The NailScan Pro is built around an ESP32-CAM module, but it's engineered as a complete capture system that standardizes every variable affecting image quality and model accuracy.
+### NailScan Pro Integration
 
-First, the device features integrated LED lighting positioned at precise angles to eliminate shadows and ensure even illumination across the nail bed. This controlled lighting means that whether the user is in a bright room or a dimly lit space, the captured image has identical lighting conditions. This eliminates one of the largest sources of variance that affected previous research.
-
-Second, there's a physical nail positioning guide at the front of the device. Users place their finger into this guide, which ensures that every nail is photographed from the exact same distance and angle. This standardization is critical because subtle variations in perspective can change how colors appear in the image, which directly affects hemoglobin prediction accuracy.
-
-Now, here's the key distinction in how these two methods serve different needs. The mobile app makes hemoglobin monitoring accessible to everyone—it's free, it's on a device people already own, and it's perfect for general wellness tracking. Anyone can download the app and start monitoring their levels at home.
-
-But for individuals who are at higher risk or need more frequent, accurate monitoring—such as pregnant women tracking their iron levels throughout pregnancy, people with diagnosed anemia managing their condition, or athletes who need precise performance monitoring—the NailScan Pro provides that next level of accuracy through standardized conditions. Think of it like the difference between a home blood pressure monitor and one at a doctor's office. Both are useful, but one provides more consistent, reliable measurements when accuracy really matters.
-
-The device is compact and portable, connecting to the mobile app via WiFi. It can be used at home by high-risk individuals, or placed in community settings like school health offices, fitness centers, or community health programs where multiple people can benefit from standardized screening.
-
----
-
-### **ANYA - NailScan Pro Demonstration** (1 minute)
-
-Here's how it works in practice. First, power on the NailScan Pro and ensure it's connected to the same WiFi network as the phone running the AnemoDx app. In the app, navigate to the Capture tab and select the external device option at the top of the screen.
-
-When ready to scan, place a finger into the positioning guide like this. The guide has soft edges for comfort and clearly indicates where the fingernail should be positioned.
-
-Then tap the "Capture" button in the app. This wirelessly triggers the NailScan Pro to take a photo with the controlled lighting and standardized positioning. The image is immediately transmitted to the phone, which sends it to the backend for analysis, and within seconds, the hemoglobin prediction appears on screen.
-
-This entire process takes less than thirty seconds per person. The consistency provided by the NailScan Pro significantly improves accuracy—this is why the device exists as an option for those who need it, while the mobile app remains accessible for everyone else.
+- The Capture screen also exposes an option to use an external ESP32-CAM based device called NailScan Pro.
+- NailScan Pro is intended for scenarios that require higher consistency and accuracy, such as:
+  - Pregnant individuals.
+  - People with chronic anemia.
+  - Athletes or others needing precise monitoring.
+- When NailScan Pro is selected:
+  - The app triggers the scanner over the local network.
+  - The hardware captures a standardized image and returns it to the app, which then forwards it to the backend.
 
 ---
 
-## 🧠 PART 4: BACKEND MODEL & VALIDATION
+## 3. Results and Tracking
 
-### **IZZY - Machine Learning Pipeline** (1.5 minutes)
+### Results Screen
 
-Here's what happens behind the scenes when an image is captured. Whether from a phone camera or from the NailScan Pro, the image is sent to the FastAPI backend server. The first step in the pipeline is image preprocessing using OpenCV. Color space transformations are applied, specifically converting from standard RGB to LAB color space, which separates luminance from color information. This makes the model more robust to lighting variations.
+- After capture, the image is sent to the FastAPI backend.
+- The results screen shows:
+  - An anemia risk assessment (Low, Medium, or High) with color coding.
+  - A predicted hemoglobin level in grams per deciliter.
+  - A reference range tailored by age and gender from the user profile.
+  - Optional color analysis details (for transparency about how the model interprets the nail bed image).
+- Users can save the result to the active profile to build a longitudinal record.
 
-Next, specific regions of interest are extracted from the image, focusing on the nail bed itself while excluding the surrounding skin, cuticles, and background. This focused analysis ensures that only the clinically relevant nail bed coloration is being evaluated.
+### Stats Tab and Trend Chart
 
-The preprocessed nail bed image is then fed into the deep learning model, which is built on a PyTorch framework. The model architecture is a convolutional neural network trained specifically for anemia detection using the Yakimov dataset. The model has learned to identify subtle color variations in the nail bed that correlate with hemoglobin levels—variations that are often imperceptible to the human eye.
-
-The model outputs a hemoglobin prediction in grams per deciliter, which is then classified into anemia risk categories based on clinical thresholds. Hemoglobin levels below twelve grams per deciliter for women or below thirteen for men typically indicate anemia.
-
----
-
-### **IZZY - Model Validation & Accuracy** (1 minute)
-
-Now for accuracy, because that's what matters when dealing with health data. The model was validated on a testing set and achieved eighty-eight percent classification accuracy for determining whether someone is anemic or not.
-
-To put this in context, this is highly competitive with other non-invasive anemia detection research. Many previous studies using similar nail bed or conjunctiva analysis achieved accuracies in the seventy to eighty-five percent range. The eighty-eight percent accuracy demonstrates that this approach—particularly the standardized image capture from the NailScan Pro—is pushing the boundaries of what's possible with non-invasive hemoglobin monitoring.
-
-This is positioned as a screening and wellness monitoring tool for personal health tracking. For continuous health monitoring, early detection, and tracking trends over time, this accuracy level makes AnemoDx a genuinely useful tool for proactive health management.
-
-Looking ahead, the model is being continuously improved. The training dataset is being expanded to include more diverse skin tones and nail conditions to ensure equitable accuracy across all populations. Multi-modal analysis is also being explored, combining nail bed images with symptom reports and demographic data to further improve prediction accuracy.
+- The Stats tab aggregates all past scans for a given profile.
+- The trend chart displays hemoglobin risk categories over time using color-coded points, allowing the user to see whether outcomes are improving, stable, or worsening.
+- A detailed history list shows:
+  - Date of each scan.
+  - Risk category and hemoglobin level.
+  - Thumbnail of the original nail image.
+- Export options allow sharing scan history with healthcare professionals.
 
 ---
 
-## 🎯 TRANSITION CUES
+## 4. NailScan Pro Hardware
 
-**Hiya → Anya:**  
-"There are also educational resources on iron-rich foods and wellness tips..." → Anya picks up with "Now here's the capture screen..."
+### Motivation and Design
 
-**Anya → Izzy:**  
-"Within seconds, comprehensive results appear on screen." → Izzy picks up with "Here's the results screen..."
+- Prior research (for example, Yakimov et al.) showed that anemia can be detected from nail bed images using machine learning.
+- A key limitation in existing datasets was inconsistent capture conditions:
+  - Variable lighting.
+  - Different distances and angles.
+  - Mixed backgrounds.
+- NailScan Pro addresses this by standardizing capture conditions:
+  - Integrated LED lighting at fixed angles to reduce shadows.
+  - A physical finger guide to control distance and orientation.
 
-**Izzy → Hiya:**  
-"...making AnemoDx a bridge between self-monitoring and professional medical care." → Hiya picks up with "The work behind AnemoDx builds directly on research..."
+### How It Works in the Demo
 
-**Hiya → Anya:**  
-"That's what drove the development of the hardware solution." → Anya picks up with "Here's the NailScan Pro..."
+- NailScan Pro is powered on and connected to the same network as the phone.
+- In the Capture tab, the external device option is selected.
+- The user places a finger in the positioning guide and taps the capture button inside the app.
+- The device:
+  - Captures the image under controlled lighting.
+  - Sends it back to the app, which forwards it to the backend for analysis.
+- The end-to-end capture and prediction cycle typically takes under thirty seconds.
 
-**Anya → Izzy:**  
-"...this is why the device exists as an option for those who need it." → Izzy picks up with "Here's what happens behind the scenes..."
+### Positioning in the Product
 
----
-
-## 📋 SPEAKER BREAKDOWN
-
-### Hiya's Sections:
-1. Wellness dashboard & profile management (1 min)
-2. Building on Yakimov research (45 sec)
-**Total: ~1.75 minutes**
-
-### Anya's Sections:
-1. Capture screen & dual methods (1.5 min)
-2. Hardware design & use case (2 min)
-3. NailScan Pro demonstration (1 min)
-**Total: ~4.5 minutes**
-
-### Izzy's Sections:
-1. Results screen & health tracking (2 min)
-2. Machine learning pipeline (1.5 min)
-3. Model validation & accuracy (1 min)
-**Total: ~4.5 minutes**
+- The mobile app provides broad accessibility: anyone with a smartphone can perform basic screening.
+- NailScan Pro provides standardization and higher consistency for:
+  - High-risk individuals.
+  - Clinics, schools, or community health programs that need repeatable measurements.
 
 ---
 
-## 💡 CLEAR USE CASE FRAMEWORK
+## 5. Backend Model and Validation
 
-**Mobile App (Accessibility):**
-- Anyone with a smartphone
-- General wellness monitoring
-- Occasional health check-ins
-- Low-to-moderate risk individuals
-- Free and immediately accessible
+### Processing Pipeline
 
-**NailScan Pro (Accuracy):**
-- Pregnant women monitoring iron throughout pregnancy
-- Individuals with diagnosed anemia managing their condition
-- Athletes requiring precise performance tracking
-- People at higher risk needing frequent, accurate monitoring
-- Clinical-grade consistency through standardized conditions
+- Backend is implemented with FastAPI.
+- When an image arrives:
+  1. OpenCV is used to preprocess the image.
+     - Conversion from RGB to LAB color space separates luminance from color components.
+  2. The system extracts a region-of-interest around the nail bed, excluding surrounding skin and background.
+  3. The processed patch is passed into a convolutional neural network (PyTorch-based) trained on the Yakimov nail dataset.
+  4. The model outputs a predicted hemoglobin value.
+  5. The backend maps that value to an anemia risk category based on clinical thresholds.
 
-**Key Message:** The mobile app makes hemoglobin monitoring accessible to everyone, while the NailScan Pro provides higher accuracy through standardization for those who need it most.
+### Accuracy
+
+- The model achieves approximately 88 percent accuracy in classifying whether an individual is anemic on a held-out test set.
+- This performance is comparable to or better than many prior non-invasive anemia approaches based on nail or conjunctiva imaging.
+- The system is presented as a screening and wellness monitoring tool, not a replacement for laboratory diagnostics.
+
+### Ongoing Improvements
+
+- Data collection is being extended to include a wider range of skin tones and nail conditions.
+- Future iterations may combine image features with symptom reports and basic demographic data to improve robustness.
 
 ---
 
-## 🎬 DEMO CHECKLIST
+## 6. Key Messages for the Demo
 
-### App Setup:
-- [ ] 3 sample profiles with realistic names
-- [ ] 7-10 saved scans with varied hemoglobin levels
-- [ ] User wellness profile completed
+- **Accessibility:** A smartphone-only path allows anyone to perform basic anemia risk screening from home.
+- **Standardization:** NailScan Pro adds clinical-style standardization of lighting and positioning for higher consistency.
+- **Continuous Tracking:** Profiles, scan history, and trend charts turn isolated measurements into a longitudinal view of hemoglobin-related risk.
+- **Evidence-Based:** The approach is grounded in peer-reviewed research and validated on a held-out test set.
+
+---
+
+## 7. Practical Demo Checklist
+
+### App Setup
+
+- [ ] Create 3 sample profiles with realistic names.
+- [ ] Save 7–10 scans with a mix of Low, Medium, and High risk results.
+- [ ] Ensure at least one profile has enough scans to populate the trend chart.
+- [ ] Complete a wellness profile so that reference ranges and personalized tips are enabled.
+
+### Hardware Setup
+
+- [ ] NailScan Pro powered on and connected to the same network as the demo device (see `ESP32_SETUP.md` for Wi-Fi and bearer token setup).
+- [ ] Test capture from the hardware path once before the live demo.
+- [ ] Verify that the fingernail positioning guide is clean and visible.
+
+### Backend and Technical
+
+- [ ] FastAPI backend running and reachable from the demo device.
+- [ ] If using a tunnel (such as ngrok), verify that `EXPO_PUBLIC_API_BASE_URL` is set to the current tunnel URL (see `BACKEND_SETUP.md`).
+- [ ] Test both phone camera and NailScan Pro capture paths end to end.
+- [ ] Confirm that the Stats tab displays at least one trend chart and a non-empty history list.
+
+This guide can be used as a checklist and talking points reference when preparing and delivering the AnemoDx demo.
 - [ ] At least one profile with trend chart showing progression
 
 ### Hardware Setup:
@@ -204,4 +194,4 @@ Looking ahead, the model is being continuously improved. The training dataset is
 - [ ] Standardized capture improves accuracy
 - [ ] Mobile app = accessibility, NailScan Pro = accuracy
 
-**Break a leg! 🚀**
+**Break a leg**

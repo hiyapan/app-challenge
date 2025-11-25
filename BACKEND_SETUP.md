@@ -1,129 +1,51 @@
-# Backend Connection Setup
+# Backend Setup
 
-## Overview
-The frontend now connects to the FastAPI backend for real anemia analysis instead of using mock data.
+The app talks to a FastAPI backend running on your laptop. The **simplest and most reliable** way to reach it from a physical phone is to use an ngrok tunnel. You **do not** need to edit any TypeScript files to change URLs.
 
-## What Was Fixed
+## Recommended: Local backend + ngrok (works on most networks)
 
-### ✅ 1. HTTP Client Setup
-- Created `lib/api.ts` with fetch-based HTTP client
-- Implemented `analyzeImages()` function to upload images
-- Implemented `checkHealth()` function to verify backend availability
+1. **Start the backend** from the project root:
 
-### ✅ 2. API URL Configuration
-- Development: `http://localhost:8000` (when `__DEV__` is true)
-- Production: `https://your-production-url.com` (configurable)
-- Automatically switches based on environment
+   ```powershell
+   cd backend
+   python server.py
+   ```
 
-### ✅ 3. Image Upload Logic
-- FormData multipart upload implementation
-- Supports 1-3 images
-- Properly formats images for React Native
-- Calls `/analyze` endpoint
+   This starts the FastAPI backend on `http://localhost:8000`.
 
-### ✅ 4. Response Handling
-- Backend returns: `{ hb_pred, is_anemic, num_images }`
-- Frontend transforms to: `{ anemiaRisk, confidence, hemoglobinLevel, recommendations, colorAnalysis }`
-- Risk calculation: High (< 10.0 g/dL), Medium (10.0-12.5 g/dL), Low (> 12.5 g/dL)
+2. **Start an ngrok tunnel** in a new PowerShell window:
 
-## Testing the Connection
+   ```powershell
+   ngrok http 8000
+   ```
 
-### Step 1: Start the Backend
-```powershell
-cd backend
-python server.py
-# or
-python main.py
-```
+   Copy the HTTPS forwarding URL that ngrok prints (for example, `https://example.ngrok-free.app`).
 
-The server should start on `http://localhost:8000`
+3. **Start the app and point it at the ngrok URL** (no code changes):
 
-### Step 2: Verify Backend is Running
-```powershell
-curl http://localhost:8000/health
-```
+   ```powershell
+   $env:EXPO_PUBLIC_API_BASE_URL = "https://example.ngrok-free.app"
+   npm start
+   ```
 
-Expected response:
-```json
-{
-  "ok": true,
-  "artifact": "hb_model_full_pipeline.pkl",
-  "has_preprocessor": true,
-  "threshold": 12.5,
-  "device": "cpu",
-  ...
-}
-```
+   The app reads `EXPO_PUBLIC_API_BASE_URL` via `config/api.ts`, so you don't have to touch `lib/api.ts` or hard-code your IP.
 
-### Step 3: Start the Frontend
-```powershell
-npm start
-# Then press 'a' for Android, 'i' for iOS, or 'w' for web
-```
+This setup works whether your phone is on Wi-Fi or cellular, as long as it can reach the ngrok URL.
 
-### Step 4: Test the Flow
-1. Open the app
-2. Navigate to the Capture screen
-3. Take a photo of a fingernail
-4. Wait for the analysis (should now connect to backend)
-5. Results should show real hemoglobin predictions
+## Alternative: Local network without ngrok (same Wi-Fi only)
 
-## Troubleshooting
+If you prefer to connect directly to your laptop over the local network (and are comfortable adjusting firewall rules), you can:
 
-### Issue: "Backend server is not available"
-**Solution:** Ensure backend is running on port 8000
+1. Use `start-backend.ps1` to start the backend and display your IP:
 
-### Issue: "Network request failed" on Android
-**Solution:** Android emulator can't access `localhost`. Use your machine's IP:
-```typescript
-// In lib/api.ts, change:
-const API_BASE_URL = __DEV__ 
-  ? 'http://YOUR_LOCAL_IP:8000'  // e.g., 'http://192.168.1.100:8000'
-  : 'https://your-production-url.com';
-```
+   ```powershell
+   .\start-backend.ps1
+   ```
 
-To find your IP on Windows:
-```powershell
-ipconfig
-# Look for "IPv4 Address" under your network adapter
-```
+2. Optionally use `test-connection.ps1` to verify that port 8000 is reachable from other devices and follow the firewall instructions in that script.
 
-### Issue: "Network request failed" on iOS Simulator
-**Solution:** iOS simulator can access `localhost` directly, but ensure:
-1. Backend is running
-2. No firewall blocking port 8000
-3. Try `http://127.0.0.1:8000` instead
+3. Run the app either by:
+   - Setting `EXPO_PUBLIC_API_BASE_URL` to your local URL (for example `http://192.168.x.x:8000`) and then running `npm start`, **or**
+   - Using `start-app.ps1`, which auto-detects your IP and sets `EXPO_PUBLIC_API_BASE_URL` before running `npm start`.
 
-### Issue: CORS errors (if using web)
-**Solution:** Backend already has CORS enabled for all origins. If issues persist, check browser console.
-
-## Backend Requirements
-
-Ensure you have the required Python packages:
-```powershell
-pip install fastapi uvicorn python-multipart opencv-python torch torchvision numpy joblib
-```
-
-## Next Steps
-
-1. **Test with real images** - Try different nail photos
-2. **Add loading indicators** - Improve UX during upload
-3. **Implement retry logic** - Handle network failures gracefully
-4. **Add offline fallback** - Consider caching or offline mode
-5. **Deploy backend** - Use a cloud service (AWS, GCP, Azure) for production
-
-## API Documentation
-
-### GET /health
-Check backend status
-- **Response:** `{ ok: boolean, artifact: string, threshold: number, ... }`
-
-### POST /analyze
-Analyze fingernail images
-- **Body:** `multipart/form-data` with 1-3 images in `files` field
-- **Response:** `{ hb_pred: number, is_anemic: 0|1, num_images: number }`
-
-### POST /predict-images
-Alternative endpoint (compatibility)
-- **Body:** `multipart/form-data` with `n1`, `n2`, `n3` or `files`
-- **Response:** Same as `/analyze`
+The ngrok flow above is recommended unless you specifically need a pure local-network-only setup.

@@ -4,12 +4,13 @@
 // 2. For testing on physical phone with tunnel: 
 //    - Run: ngrok http 8000
 //    - Copy the https URL and paste below
-// 3. For Android emulator: use your local IP
+// 3. For Android emulator: use the host machine's local IP address
 
-// CHANGE THIS to your ngrok URL when using tunnel mode with physical phone
-const API_BASE_URL = __DEV__ 
-  ? 'https://terresa-intemerate-easily.ngrok-free.dev'  // ngrok tunnel for physical phone
-  : 'https://your-production-url.com';  // Production
+// Prefer using EXPO_PUBLIC_API_BASE_URL so you don't hard-code IPs.
+// This value is configured in config/api.ts and can be set from a script.
+import { API_BASE_URL as CONFIG_API_BASE_URL } from '../config/api';
+
+const API_BASE_URL = CONFIG_API_BASE_URL;
 
 // Types matching backend response
 interface BackendAnalysisResponse {

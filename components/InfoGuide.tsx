@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { Modal, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from './ui/IconSymbol';
+import { ThemedText } from './ui/ThemedText';
 
 interface InfoGuideProps {
   visible: boolean;

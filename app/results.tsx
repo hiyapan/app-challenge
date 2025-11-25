@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Alert, Share } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useEffect, useState } from 'react';
+import { Alert, Dimensions, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { ThemedText } from '@/components/ui/ThemedText';
+import { ThemedView } from '@/components/ui/ThemedView';
 import { useUserContext } from '@/contexts/UserContext';
-import { analyzeImages, AnalysisResult, checkHealth } from '@/lib/api';
+import { AnalysisResult, analyzeImages, checkHealth } from '@/lib/api';
 
 interface SymptomCheck {
   id: string;

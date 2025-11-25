@@ -1,46 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet, Modal } from 'react-native';
-import { Stack } from 'expo-router';
-import OnboardingScreen from '@/components/OnboardingScreen';
-import ProfileSetupScreen, { ProfileData } from '@/components/ProfileSetupScreen';
 import { useUserContext } from '@/contexts/UserContext';
-import { ThemedText } from '@/components/ThemedText';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { TouchableOpacity } from 'react-native';
+import { Stack } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
+import OnboardingScreen from '@/components/OnboardingScreen';
+import ProfileSetupScreen, { type ProfileData } from '@/components/ProfileSetupScreen';
 
 export default function AppContainer() {
-  const { hasCompletedOnboarding, checkOnboardingStatus, completeOnboarding } = useUserContext();
+  const { completeOnboarding, hasCompletedOnboarding, checkOnboardingStatus } = useUserContext();
   const [isLoading, setIsLoading] = useState(true);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Load onboarding status on app start
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        await checkOnboardingStatus();
-      } catch (error) {
-        console.error('Error initializing app:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    const init = async () => {
+      await checkOnboardingStatus();
+      setIsLoading(false);
     };
-
-    initializeApp();
+    init();
   }, [checkOnboardingStatus]);
+
+  // Control whether onboarding is shown based on stored status
+  useEffect(() => {
+    if (!isLoading) {
+      setShowOnboarding(!hasCompletedOnboarding);
+    }
+  }, [isLoading, hasCompletedOnboarding]);
 
   const handleGetStarted = async () => {
     await completeOnboarding();
-  };
-
-  const handleSetupProfile = () => {
-    setShowProfileSetup(true);
+    setShowOnboarding(false); // Hide the onboarding screen
   };
 
   const handleProfileComplete = async (profileData: ProfileData) => {
-    // Save profile data (you can extend UserContext to store this)
+    // TODO: Save profile data in UserContext
     setShowProfileSetup(false);
-    
-    // Go directly to main app after profile setup
-    await completeOnboarding();
+    await completeOnboarding(); // Return to main app
   };
 
   const handleProfileSkip = async () => {
@@ -64,13 +59,10 @@ export default function AppContainer() {
         </View>
       )}
       
-      {/* Onboarding Overlay */}
-      {!isLoading && !hasCompletedOnboarding && (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'white' }]}>
-          <OnboardingScreen 
-            onGetStarted={handleGetStarted}
-            onSetupProfile={handleSetupProfile}
-          />
+      {/* Always show onboarding - for now */}
+      {showOnboarding && (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'white', zIndex: 1000 }]}>
+          <OnboardingScreen onGetStarted={handleGetStarted} />
         </View>
       )}
       

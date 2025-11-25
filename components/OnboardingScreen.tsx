@@ -1,23 +1,22 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ui/ThemedText';
+import { ThemedView } from '@/components/ui/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import React from 'react';
 import { Dimensions, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 interface OnboardingScreenProps {
   onGetStarted: () => void;
-  onSetupProfile: () => void;
 }
 
 const { width, height } = Dimensions.get('window');
 
-export default function OnboardingScreen({ onGetStarted, onSetupProfile }: OnboardingScreenProps) {
+export default function OnboardingScreen({ onGetStarted }: OnboardingScreenProps) {
+  // Main feature cards shown in onboarding
   const features = [
     {
       icon: 'camera.fill',
       title: 'How It Works',
       description: 'Simply take a photo of your fingernail and get instant analysis results based on color analysis.',
-      color: '#FF6B6B'
+      color: '#FF6B6B' // Red accent color
     },
     {
       icon: 'eye.fill',
@@ -39,6 +38,7 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
     }
   ];
 
+  // Stats shown at the bottom of onboarding
   const stats = [
     {
       number: '1M+',
@@ -113,13 +113,12 @@ export default function OnboardingScreen({ onGetStarted, onSetupProfile }: Onboa
 
       {/* Action Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.setupProfileButton} onPress={onSetupProfile}>
-          <ThemedText style={styles.setupProfileText}>Setup Your Profile</ThemedText>
-          <IconSymbol size={20} name="person.circle.fill" color="white" />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.skipButton} onPress={onGetStarted}>
-          <ThemedText style={styles.skipText}>Skip for Now</ThemedText>
+        <TouchableOpacity 
+          style={[styles.setupProfileButton, { marginBottom: 16 }]} 
+          onPress={onGetStarted}
+        >
+          <ThemedText style={styles.setupProfileText}>Get Started</ThemedText>
+          <IconSymbol size={20} name="arrow.right" color="white" style={{ marginLeft: 8 }} />
         </TouchableOpacity>
         
         <ThemedText style={styles.agreementText}>

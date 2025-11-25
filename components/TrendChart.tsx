@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions, ScrollView } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '@/components/ui/ThemedText';
 import { ScanResult } from '@/contexts/UserContext';
 
 interface TrendChartProps {
@@ -10,7 +10,7 @@ interface TrendChartProps {
 
 export function TrendChart({ scans, themeColor }: TrendChartProps) {
   if (scans.length === 0) {
-    return null; // Don't show anything if no data
+    return null; // Do not display anything if no data is available
   }
 
   // Sort scans by date (oldest to newest)

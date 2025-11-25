@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useTheme } from '@/contexts/ThemeContext';
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { IconSymbol } from '../../components/ui/IconSymbol';
+import { ThemedText } from '../../components/ui/ThemedText';
+import { ThemedView } from '../../components/ui/ThemedView';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function SettingsScreen() {
   const { currentTheme, themeOptions, setTheme } = useTheme();
@@ -109,7 +109,7 @@ export default function SettingsScreen() {
                 <ThemedText style={styles.boldText}>Purpose:</ThemedText> Educational tool for anemia awareness and preliminary screening
               </ThemedText>
               <ThemedText style={styles.disclaimerText}>
-                ⚠️ This app is not a substitute for professional medical diagnosis. Always consult healthcare professionals for proper medical evaluation.
+                This app is not a substitute for professional medical diagnosis. Always consult healthcare professionals for proper medical evaluation.
               </ThemedText>
             </View>
           )}

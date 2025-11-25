@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, Modal, Platform, TextInput, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useTheme } from '@/contexts/ThemeContext';
-import { InfoGuide } from '@/components/InfoGuide';
-import { useUserContext } from '@/contexts/UserContext';
+import { useEffect, useState } from 'react';
+import { Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { InfoGuide } from '../../components/InfoGuide';
+import { IconSymbol } from '../../components/ui/IconSymbol';
+import { ThemedText } from '../../components/ui/ThemedText';
+import { ThemedView } from '../../components/ui/ThemedView';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useUserContext } from '../../contexts/UserContext';
 
 
 interface WellnessMetric {
@@ -825,7 +825,7 @@ export default function WellnessScreen() {
               <View style={styles.ironTipCard}>
                 <IconSymbol size={20} name="lightbulb.fill" color="#FF9800" />
                 <ThemedText style={styles.ironTipText}>
-                  💡 Pro tip: Pair iron-rich foods with vitamin C sources (citrus fruits, bell peppers, strawberries) to boost iron absorption!
+                  Pro tip: Pair iron-rich foods with vitamin C sources (citrus fruits, bell peppers, strawberries) to boost iron absorption
                 </ThemedText>
               </View>
               
@@ -1225,6 +1225,7 @@ export default function WellnessScreen() {
                 </View>
               </View>
 
+              {/* Height selection input group */}
               <View style={styles.inputGroup}>
                 <ThemedText style={styles.inputLabel}>Height (optional)</ThemedText>
                 <View style={styles.heightButtons}>
@@ -1310,10 +1311,11 @@ export default function WellnessScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.dataContributionModalContent}>
             <View style={styles.modalHeader}>
+              {/* Research contribution disclaimer - not implemented yet */}
               <View style={styles.modalTitleContainer}>
                 <ThemedText style={styles.dataModalTitle}>Contribute to Health Research</ThemedText>
                 <ThemedText style={styles.dataModalSubtitle}>
-                  Help improve community health outcomes
+                  This is not yet implemented. Data is not shared yet
                 </ThemedText>
               </View>
               <TouchableOpacity 

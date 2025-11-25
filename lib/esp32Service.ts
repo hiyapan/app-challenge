@@ -9,7 +9,7 @@ export interface ESP32Config {
 
 // Default config - user should update via settings or hardcode
 const DEFAULT_CONFIG: ESP32Config = {
-  baseUrl: 'http://192.168.1.8',  // Your ESP32-CAM IP
+  baseUrl: 'http://192.168.1.50',  // Example ESP32-CAM IP address (update to match the local network)
   bearerToken: 'esp32cam',  // Match the token in Arduino sketch
 };
 

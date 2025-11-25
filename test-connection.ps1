@@ -2,7 +2,16 @@
 Write-Host "Testing Backend Connection..." -ForegroundColor Green
 Write-Host ""
 
-$ip = "10.85.120.197"
+# Detect local IPv4 address used for phone access
+$ip = Get-NetIPAddress -AddressFamily IPv4 |
+    Where-Object { $_.IPAddress -notlike '127.*' -and $_.IPAddress -ne '0.0.0.0' } |
+    Select-Object -First 1 -ExpandProperty IPAddress
+
+if (-not $ip) {
+    Write-Host "Could not automatically detect local IP address." -ForegroundColor Red
+    $ip = Read-Host "Enter your machine's IP address (e.g., 192.168.x.x)"
+}
+
 $port = 8000
 $url = "http://${ip}:${port}/health"
 
@@ -14,10 +23,10 @@ Write-Host ""
 Write-Host "1. Testing local connection..." -ForegroundColor Cyan
 try {
     $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 5
-    Write-Host "   ✓ Backend is running locally!" -ForegroundColor Green
+    Write-Host "   Backend is running locally" -ForegroundColor Green
     Write-Host "   Response: $($response.StatusCode)" -ForegroundColor Green
 } catch {
-    Write-Host "   ✗ Backend is NOT running!" -ForegroundColor Red
+    Write-Host "   Backend is NOT running" -ForegroundColor Red
     Write-Host "   Please start the backend first: .\start-backend.ps1" -ForegroundColor Yellow
     exit
 }
@@ -28,9 +37,9 @@ try {
     $tcpClient = New-Object System.Net.Sockets.TcpClient
     $tcpClient.Connect($ip, $port)
     $tcpClient.Close()
-    Write-Host "   ✓ Port 8000 is accessible on network!" -ForegroundColor Green
+    Write-Host "   Port 8000 is accessible on network" -ForegroundColor Green
 } catch {
-    Write-Host "   ✗ Port 8000 is blocked (likely firewall)" -ForegroundColor Red
+    Write-Host "   Port 8000 is blocked (likely firewall)" -ForegroundColor Red
     Write-Host ""
     Write-Host "   TO FIX (choose one):" -ForegroundColor Yellow
     Write-Host "   A. Run PowerShell as Administrator and execute:" -ForegroundColor White

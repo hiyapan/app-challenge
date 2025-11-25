@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Modal, ScrollView, TextInput, Pressable, Image, ActivityIndicator } from 'react-native';
-import { CameraView, CameraType, useCameraPermissions, FlashMode } from 'expo-camera';
+import { CameraType, CameraView, FlashMode, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useUserContext } from '@/contexts/UserContext';
-import { useTheme } from '@/contexts/ThemeContext';
-import { captureFromESP32, checkESP32Health, getESP32Config } from '@/lib/esp32Service';
-import { InfoGuide } from '@/components/InfoGuide';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { InfoGuide } from '../../components/InfoGuide';
+import { IconSymbol } from '../../components/ui/IconSymbol';
+import { ThemedText } from '../../components/ui/ThemedText';
+import { ThemedView } from '../../components/ui/ThemedView';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useUserContext } from '../../contexts/UserContext';
+import { captureFromESP32, checkESP32Health } from '../../lib/esp32Service';
 
 export default function CaptureScreen() {
   const [facing, setFacing] = useState<CameraType>('back');

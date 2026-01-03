@@ -6,7 +6,7 @@ This guide explains how to set up the ESP32-CAM ("NailScan Pro") hardware using 
 ## 1. Flash the ESP32-CAM firmware
 
 1. Open the Arduino IDE.
-2. Install the **ESP32** board support package if you haven't already (via Boards Manager).
+2. Install the ESP32 board support package if you haven't already (via Boards Manager).
 3. In the project folder, open the sketch:
 
    ```
@@ -24,7 +24,7 @@ This guide explains how to set up the ESP32-CAM ("NailScan Pro") hardware using 
    const char* mdnsName = "esp32cam";      // optional, used for http://esp32cam.local
    ```
 
-5. Select the correct **board** (e.g., `AI Thinker ESP32-CAM`) and **port** in the Arduino IDE.
+5. Select the correct board (e.g., `AI Thinker ESP32-CAM`) and port in the Arduino IDE.
 6. Click **Upload** to flash the firmware to the ESP32-CAM.
 
 ## 2. Confirm the ESP32-CAM is online

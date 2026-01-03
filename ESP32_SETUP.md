@@ -2,7 +2,6 @@
 
 This guide explains how to set up the ESP32-CAM ("NailScan Pro") hardware using the Arduino IDE and connect it to the AnemoDx app.
 
-The ESP32 side is intentionally simple: you only configure Wi-Fi credentials, an optional mDNS name, and a bearer token in the Arduino sketch, then upload it.
 
 ## 1. Flash the ESP32-CAM firmware
 
@@ -86,18 +85,3 @@ The app will:
 
 If something fails, the app will show a specific error message (for example, network error, unauthorized, or save error).
 
-## 5. Troubleshooting
-
-- **"ESP32-CAM Not Found" alert**
-  - Double-check the `baseUrl` in `lib/esp32Service.ts`.
-  - Ensure the phone and ESP32 are on the same Wi-Fi.
-  - Confirm you can open `http://<baseUrl>/health` from a browser on the phone or laptop.
-
-- **"Unauthorized: Invalid bearer token"**
-  - Make sure `BEARER_TOKEN` in `esp32_cam_server.ino` matches `bearerToken` in `lib/esp32Service.ts`.
-
-- **Wi-Fi or mDNS issues**
-  - If `http://esp32cam.local` does not resolve, use the numeric IP shown in Serial Monitor.
-  - Some networks block mDNS or isolate devices; in that case, stick to the numeric IP on a standard home/office Wi-Fi.
-
-This setup keeps the ESP32 side simple: configure Wi-Fi and token in Arduino, update the one `baseUrl` in the app once, and then use the "Scan with Device" flow from the Capture screen.

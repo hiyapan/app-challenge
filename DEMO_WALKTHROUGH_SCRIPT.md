@@ -1,6 +1,5 @@
 # AnemoDx Demo Guide
 
-This document summarizes how to demo the AnemoDx system end to end. It is written as a high-level guide rather than a word-for-word script.
 
 ## Demo Goals
 
@@ -140,58 +139,5 @@ This document summarizes how to demo the AnemoDx system end to end. It is writte
 - Data collection is being extended to include a wider range of skin tones and nail conditions.
 - Future iterations may combine image features with symptom reports and basic demographic data to improve robustness.
 
----
 
-## 6. Key Messages for the Demo
 
-- **Accessibility:** A smartphone-only path allows anyone to perform basic anemia risk screening from home.
-- **Standardization:** NailScan Pro adds clinical-style standardization of lighting and positioning for higher consistency.
-- **Continuous Tracking:** Profiles, scan history, and trend charts turn isolated measurements into a longitudinal view of hemoglobin-related risk.
-- **Evidence-Based:** The approach is grounded in peer-reviewed research and validated on a held-out test set.
-
----
-
-## 7. Practical Demo Checklist
-
-### App Setup
-
-- [ ] Create 3 sample profiles with realistic names.
-- [ ] Save 7–10 scans with a mix of Low, Medium, and High risk results.
-- [ ] Ensure at least one profile has enough scans to populate the trend chart.
-- [ ] Complete a wellness profile so that reference ranges and personalized tips are enabled.
-
-### Hardware Setup
-
-- [ ] NailScan Pro powered on and connected to the same network as the demo device (see `ESP32_SETUP.md` for Wi-Fi and bearer token setup).
-- [ ] Test capture from the hardware path once before the live demo.
-- [ ] Verify that the fingernail positioning guide is clean and visible.
-
-### Backend and Technical
-
-- [ ] FastAPI backend running and reachable from the demo device.
-- [ ] If using a tunnel (such as ngrok), verify that `EXPO_PUBLIC_API_BASE_URL` is set to the current tunnel URL (see `BACKEND_SETUP.md`).
-- [ ] Test both phone camera and NailScan Pro capture paths end to end.
-- [ ] Confirm that the Stats tab displays at least one trend chart and a non-empty history list.
-
-This guide can be used as a checklist and talking points reference when preparing and delivering the AnemoDx demo.
-- [ ] At least one profile with trend chart showing progression
-
-### Hardware Setup:
-- [ ] NailScan Pro powered on
-- [ ] WiFi connection established
-- [ ] Test capture completed successfully
-- [ ] Positioning guide clean and visible
-
-### Technical:
-- [ ] Backend server running
-- [ ] Phone/tablet fully charged
-- [ ] Screen mirroring tested and working
-- [ ] Backup screenshots ready
-
-### Key Stats to Mention:
-- [ ] 88% classification accuracy on testing set
-- [ ] Competitive with 70-85% range in existing literature
-- [ ] Standardized capture improves accuracy
-- [ ] Mobile app = accessibility, NailScan Pro = accuracy
-
-**Break a leg**

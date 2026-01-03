@@ -14,7 +14,6 @@ It supports two capture paths:
 
 ## Quick Start (Python backend + ngrok)
 
-You don't need to edit any TypeScript to change URLs; just set `EXPO_PUBLIC_API_BASE_URL` before running the app.
 
 1. Install dependencies:
 
@@ -35,7 +34,7 @@ You don't need to edit any TypeScript to change URLs; just set `EXPO_PUBLIC_API_
    ngrok http 8000
    ```
 
-   Copy the **https** forwarding URL that ngrok prints (for example, `https://example.ngrok-free.app`).
+   Copy the **https** forwarding URL that ngrok prints 
 
 4. In a third PowerShell window, start the app and point it at the ngrok URL **without editing code**:
 
@@ -44,6 +43,6 @@ You don't need to edit any TypeScript to change URLs; just set `EXPO_PUBLIC_API_
    npm start
    ```
 
-The app reads `EXPO_PUBLIC_API_BASE_URL` via `config/api.ts`, so you never need to hard-code your IP or tunnel URL in the source.
 
-For alternative setups (like using your local IP on the same Wi-Fi instead of ngrok), see [Backend setup](BACKEND_SETUP.md).
+
+For alternative setups see [Backend setup](BACKEND_SETUP.md).
